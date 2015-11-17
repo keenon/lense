@@ -8,5 +8,8 @@ Maven:
         <version>1.2</version>
     </dependency>
 
+Links:
+
 [Here's where the NIPS experiments are](http://github.com/keenon/lense-experiments)
+
 [Here's the developement repo (no longer maintained)](http://github.com/keenon/lense-dev)
