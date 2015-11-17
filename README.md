@@ -4,8 +4,8 @@ Maven:
 
     <dependency>
         <groupId>com.github.keenon</groupId>
-        <artifactId>loglinear</artifactId>
-        <version>1.2</version>
+        <artifactId>lense</artifactId>
+        <version>1.0</version>
     </dependency>
 
 Links:
