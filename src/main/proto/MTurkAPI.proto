@@ -1,0 +1,30 @@
+package com.github.keenon.lense.human_server;
+
+option java_package = "com.github.keenon.lense.human_server";
+option java_outer_classname = "MTurkAPIProto";
+
+enum MessageType {
+    GetNumberOfWorkers = 1;
+    HireWorkers = 2;
+}
+
+message MTurkAPIRequest {
+    required MessageType type = 1;
+    // This is the ID that will be included in all responses, so that they can be routed correctly
+    required int32 reqID = 2;
+
+    // This gets set in the HireWorkers type message
+    optional int32 numToHire = 3;
+}
+
+message MTurkAPIResponse {
+    required MessageType type = 1;
+    // This is the ID that is be included in all responses, so that they can be routed correctly
+    required int32 reqID = 2;
+
+    // Returns for GetNumberOfWorkers requests
+    optional int32 numWorkers = 4;
+
+    // Returns for HireWorkers posts
+    optional string postURL = 3;
+}

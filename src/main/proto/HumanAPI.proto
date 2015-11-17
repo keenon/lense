@@ -1,0 +1,40 @@
+package com.github.keenon.lense.human_server;
+
+option java_package = "com.github.keenon.lense.human_server";
+option java_outer_classname = "HumanAPIProto";
+
+message APIRequest {
+    enum MessageType {
+        JobPosting = 1;
+        Query = 2;
+        JobRelease = 3;
+    }
+
+    required MessageType type = 1;
+    // This is the ID that will be included in all responses, so that they can be routed correctly
+    required int32 jobID = 2;
+
+    // For jobs, the same worker can't do two jobs with the same OnlyOnceID, for cases where multiple *independent*
+    // labels are requested
+    optional int32 onlyOnceID = 3;
+    // For queries
+    optional int32 queryID = 4;
+    // This is the bit that will be forwarded directly to the client once they are in the system
+    optional string JSON = 5;
+}
+
+message APIResponse {
+    enum MessageType {
+        HumanArrival = 1;
+        QueryAnswer = 2;
+        HumanExit = 3;
+        QueryFailure = 4;
+    }
+    required MessageType type = 1;
+    // All communication needs to reference the ID of the job being done
+    required int32 jobID = 2;
+
+    // Query responses
+    optional int32 queryID = 3;
+    optional int32 queryAnswer = 4;
+}

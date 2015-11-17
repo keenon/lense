@@ -1,0 +1,12 @@
+com.github.keenon.lense.convenience
+com.github.keenon.lense.gameplay
+com.github.keenon.lense.gameplay.distributions
+com.github.keenon.lense.gameplay.players
+com.github.keenon.lense.gameplay.utilities
+com.github.keenon.lense.human_server
+com.github.keenon.lense.human_server.mturk
+com.github.keenon.lense.human_server.payments
+com.github.keenon.lense.human_server.server
+com.github.keenon.lense.human_source
+com.github.keenon.lense.lense
+com.github.keenon.lense.storage
