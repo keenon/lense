@@ -1,7 +1,12 @@
-This is the main repo for the LENSE production version.
+This is the main repo for the LENSE production version that goes on Maven.
 
-Here's our design diagram. See the wiki for more information.
+Maven:
 
-[Click here for a bigger version of the image](http://keenon.github.io/lense-service-platform/design-drawing-separate.png)
+    <dependency>
+        <groupId>com.github.keenon</groupId>
+        <artifactId>loglinear</artifactId>
+        <version>1.2</version>
+    </dependency>
 
-![Overall System Design Document](http://keenon.github.io/lense-service-platform/design-drawing-separate.png)
+[Here's where the NIPS experiments are](http://github.com/keenon/lense-experiments)
+[Here's the developement repo (no longer maintained)](http://github.com/keenon/lense-dev)
