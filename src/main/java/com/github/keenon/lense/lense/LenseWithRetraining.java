@@ -104,6 +104,8 @@ public class LenseWithRetraining {
      * models by using humans to deal with ambiguity.
      *
      * @param model the model to run LENSE on
+     * @param moveMonitor the monitor lock used to make sure moves happen sequentially, if LENSE is being used in a
+     *                    multithreaded environment.
      * @return a best guess for the true labels of the model
      */
     public int[] getMAP(GraphicalModel model, Object moveMonitor) {
@@ -116,6 +118,8 @@ public class LenseWithRetraining {
      * played, you should use this call, so you can get the whole game entity back from LENSE.
      *
      * @param game the game to be played out
+     * @param moveMonitor the monitor lock used to make sure moves happen sequentially, if LENSE is being used in a
+     *                    multithreaded environment.
      * @return the game object after gameplay is complete
      */
     public Game playGame(Game game, Object moveMonitor) {
