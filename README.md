@@ -20,7 +20,7 @@ To add as a Maven dependency:
 
 ## What is LENSE?
 
-Basically, you can think of LENSE as a magical MAP inference tool for log-linear PGMs.
+Basically, you can think of LENSE as a magical MAP inference tool for log-linear PGMs, that uses humans to help with labeling individual variables when it's uncertain.
 If those are unfamiliar concepts to you, go watch the lectures from [Daphne Koller's excellent Coursera course on PGMs](https://class.coursera.org/pgm/lecture/preview).
 
 For a more academic treatment of the following content, see [the NIPS paper](http://arxiv.org/abs/1506.03140).
@@ -127,7 +127,7 @@ this:
 
 ```json
 {
-    "html": "<h1>Title</h1>Are you feeling lucky, punk?",
+    "html": "<h4>Title</h4>Are you feeling lucky, punk?",
     "choices": [
         "yes",
         "no",
@@ -135,6 +135,8 @@ this:
     ]
 }
 ```
+
+This will display in a user's browser more or less like this (with some allowance for markdown):
 
 Here's the Java code to generate sequence labelling questions for each token, using the SimpleJSON library from google.
 
