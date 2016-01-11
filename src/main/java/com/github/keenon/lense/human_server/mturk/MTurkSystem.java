@@ -40,7 +40,12 @@ public class MTurkSystem {
         paymentsThread = new PaymentsThread(((jobRecord, amountOwed) -> payWorker(jobRecord.workerID, jobRecord.assignmentID, amountOwed)));
         new Thread(paymentsThread).start();
 
-        mturkService = new RequesterService(new PropertiesClientConfig("/home/keenon/.aws/mturk.properties"));
+        try {
+            mturkService = new RequesterService(new PropertiesClientConfig("/home/keenon/.aws/mturk.properties"));
+        }
+        catch (Exception e) {
+
+        }
 
         mTurkServer = new MTurkServer(this::hireWorkers, this::numWorkersPaidFor);
         new Thread(mTurkServer).start();

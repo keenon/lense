@@ -1,5 +1,7 @@
 package com.github.keenon.lense.human_server;
 
+import com.github.keenon.lense.human_server.server.JettyServer;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -19,6 +21,7 @@ public class HumanSourceServer implements Runnable {
 
     public static void main(String[] args) {
         new Thread(new HumanSourceServer()).start();
+        new Thread(new JettyServer()).start();
     }
 
     // A list of humans

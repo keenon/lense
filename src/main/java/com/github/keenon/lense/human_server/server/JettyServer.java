@@ -21,7 +21,7 @@ public class JettyServer implements Runnable {
     // broker
     private static final String KEYSTORE_LOCATION = "/etc/apache2/ssl/keystore";
     private static final String KEYSTORE_PASS = "passwd";
-    private static final String WEB_APP_CONTEXT = "lense/src/main/lense-webapp";
+    private static final String WEB_APP_CONTEXT = "src/main/lense-webapp";
 
     public static void main(String[] args) {
         new JettyServer().run();
