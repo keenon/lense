@@ -43,7 +43,13 @@ public class MTurkHumanSource extends HumanSource {
      */
     public MTurkHumanSource(String host, ConcatVectorNamespace namespace, ContinuousDistribution humanDelay) throws IOException {
         humans = new HumanSourceClient(host, 2109);
-        mturk = new MTurkClient(host, 2110);
+        System.err.println("Connected to human GUI at http://"+host+":8080/");
+        try {
+            mturk = new MTurkClient(host, 2110);
+        }
+        catch (Exception e) {
+            System.err.println("Failed to connect to MTurkClient, hiring Turkers programatically will be disabled.");
+        }
 
         artificialHumanProvider = new Game.ArtificialHumanAgreementDisagrementProvider(agreement, disagreement, humanDelay);
 
@@ -61,7 +67,7 @@ public class MTurkHumanSource extends HumanSource {
             {
                 System.err.println("Closing connections...");
                 humans.close();
-                mturk.close();
+                if (mturk != null) mturk.close();
             }
         };
         Runtime.getRuntime().addShutdownHook(shutdownHook);
@@ -74,7 +80,7 @@ public class MTurkHumanSource extends HumanSource {
     public void close() {
         System.err.println("Closing connections...");
         humans.close();
-        mturk.close();
+        if (mturk != null) mturk.close();
         Runtime.getRuntime().removeShutdownHook(shutdownHook);
     }
 
