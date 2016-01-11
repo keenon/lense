@@ -7,7 +7,7 @@ To add as a Maven dependency:
     <dependency>
         <groupId>com.github.keenon</groupId>
         <artifactId>lense</artifactId>
-        <version>1.0</version>
+        <version>1.1</version>
     </dependency>
 
 ## Useful Links:
