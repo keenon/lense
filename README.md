@@ -14,7 +14,7 @@ To add as a Maven dependency:
 
 - [the original paper](http://arxiv.org/abs/1506.03140)
 - [the experiments from the NIPS paper](http://github.com/keenon/lense-experiments)
-- [the developement repo (no longer maintained)](http://github.com/keenon/lense-dev)
+- [the development repo (no longer maintained)](http://github.com/keenon/lense-dev)
 
 # A brief tutorial:
 
