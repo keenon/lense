@@ -101,6 +101,12 @@ public class Lense {
             // Turn in finishes the game
 
             if (event instanceof Game.TurnIn) {
+
+                // Release any remaining humans when we terminate the game
+
+                for (Game.HumanArrival arrival : game.availableHumans) {
+                    humanHandles.get(arrival).release();
+                }
                 break;
             }
 
@@ -136,7 +142,7 @@ public class Lense {
                     }
                     responseReceived[0] = true;
 
-                    System.err.println("Response received on "+ql.variable);
+                    System.err.println("Response received on "+ql.variable+"="+response);
 
                     if (recordQueries) {
                         long delay = System.currentTimeMillis() - humanLastActivityTimestamp.get(ql.human);

@@ -28,7 +28,7 @@ public class MTurkHumanSource extends HumanSource {
     public ContinuousDistribution humanDelay;
     public Game.ArtificialHumanProvider artificialHumanProvider;
 
-    static final double humanCorrectnessProb = 0.7;
+    public double humanCorrectnessProb = 0.7;
 
     ConcatVector agreement = new ConcatVector(0);
     ConcatVector disagreement = new ConcatVector(0);
@@ -51,14 +51,14 @@ public class MTurkHumanSource extends HumanSource {
             System.err.println("Failed to connect to MTurkClient, hiring Turkers programatically will be disabled.");
         }
 
-        artificialHumanProvider = new Game.ArtificialHumanAgreementDisagrementProvider(agreement, disagreement, humanDelay);
-
         this.namespace = namespace;
         this.humanDelay = humanDelay;
 
         namespace.setDenseFeature(agreement, "BIAS", new double[]{Math.log(humanCorrectnessProb)});
         // Give a uniform chance of selecting any of the other options
         namespace.setDenseFeature(disagreement, "BIAS", new double[]{Math.log((1-humanCorrectnessProb)/(4-1))});
+
+        artificialHumanProvider = new Game.ArtificialHumanAgreementDisagrementProvider(agreement, disagreement, humanDelay);
 
         shutdownHook = new Thread()
         {
@@ -100,7 +100,7 @@ public class MTurkHumanSource extends HumanSource {
         if (!onlyOnceIDs.containsKey(model)) {
             onlyOnceIDs.put(model, onlyOnceIDs.size());
         }
-        MTurkHumanHandle humanHandle = new MTurkHumanHandle(model, humans, namespace, humanDelay);
+        MTurkHumanHandle humanHandle = new MTurkHumanHandle(model, humans, namespace, humanDelay, agreement, disagreement);
         HumanSourceClient.JobHandle[] jobHandleRef = new HumanSourceClient.JobHandle[1];
 
         jobHandleRef[0] = humans.createJob(model.getModelMetaDataByReference().getOrDefault(QUERY_JSON, "{}"), onlyOnceIDs.get(model), () -> {
@@ -118,14 +118,23 @@ public class MTurkHumanSource extends HumanSource {
         public HumanSourceClient.JobHandle jobHandle = null; // This must get set before the handle is returned
         ConcatVectorNamespace namespace;
         ContinuousDistribution delayDistribution;
+        ConcatVector agreement;
+        ConcatVector disagreement;
         GraphicalModel model;
         int[] sizes;
 
-        public MTurkHumanHandle(GraphicalModel model, HumanSourceClient humans, ConcatVectorNamespace namespace, ContinuousDistribution delayDistribution) {
+        public MTurkHumanHandle(GraphicalModel model,
+                                HumanSourceClient humans,
+                                ConcatVectorNamespace namespace,
+                                ContinuousDistribution delayDistribution,
+                                ConcatVector agreement,
+                                ConcatVector disagreement) {
             this.model = model;
             this.humans = humans;
             this.namespace = namespace;
             this.delayDistribution = delayDistribution;
+            this.agreement = agreement;
+            this.disagreement = disagreement;
             sizes = model.getVariableSizes();
         }
 
@@ -143,7 +152,7 @@ public class MTurkHumanSource extends HumanSource {
                             sizes[i], sizes[i]
                     });
                     for (int[] assn : errorModel[i]) {
-                        errorModel[i].setAssignmentValue(assn, () -> new ConcatVector(0));
+                        errorModel[i].setAssignmentValue(assn, assn[0] == assn[1] ? () -> agreement : () -> disagreement);
                     }
                 }
             }

@@ -91,14 +91,15 @@ $(function () {
                     renderQuery(json['payload'], function(closureChoice) {
                         console.log("Choosing "+closureChoice);
 
+                        content.css({
+                            height: content.height()
+                        });
+                        content.html("There's no more work from the server for the moment. KEEP THIS TAB OPEN SO WE CAN PAY YOU, but feel free to browse to other sites in other tabs. We'll alert you if more work shows up.");
+
                         ws.send(JSON.stringify({
                             type: "query-response",
                             "query-response": closureChoice
                         }));
-
-                        content.css({
-                            height: content.height()
-                        });
                     });
                 }
 
