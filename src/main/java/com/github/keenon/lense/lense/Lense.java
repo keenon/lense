@@ -26,7 +26,7 @@ public class Lense {
     GamePlayer gamePlayer;
     Function<Game, Double> utility;
 
-    ConcatVector weights;
+    public ConcatVector weights;
 
     boolean recordQueries;
 
@@ -170,6 +170,7 @@ public class Lense {
             // Job postings
 
             else if (event instanceof Game.HumanJobPosting) {
+                System.err.println("Make Job Posting");
 
                 boolean[] responseReceived = new boolean[]{false};
 
