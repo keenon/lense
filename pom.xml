@@ -4,7 +4,7 @@
 
     <groupId>com.github.keenon</groupId>
     <artifactId>lense</artifactId>
-    <version>1.1.1-SNAPSHOT</version>
+    <version>1.2.0-SNAPSHOT</version>
 
     <!-- Info for Maven Central repo -->
 
