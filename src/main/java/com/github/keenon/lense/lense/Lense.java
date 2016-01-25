@@ -1,6 +1,8 @@
 package com.github.keenon.lense.lense;
 
 import com.github.keenon.lense.gameplay.Game;
+import com.github.keenon.lense.gameplay.players.GamePlayerMCTS;
+import com.github.keenon.lense.gameplay.utilities.UncertaintyUtilityWithoutTime;
 import com.github.keenon.lense.storage.ModelQueryRecord;
 import com.github.keenon.loglinear.model.ConcatVector;
 import com.github.keenon.loglinear.model.GraphicalModel;
@@ -29,6 +31,10 @@ public class Lense {
     public ConcatVector weights;
 
     boolean recordQueries;
+
+    public Lense(HumanSource humans) {
+        this(humans, new GamePlayerMCTS(), new UncertaintyUtilityWithoutTime(), new ConcatVector(0));
+    }
 
     public Lense(HumanSource humans, GamePlayer gamePlayer, Function<Game, Double> utility, ConcatVector weights) {
         this.humans = humans;
