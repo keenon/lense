@@ -72,6 +72,12 @@ $(function () {
                 "hit-id": hitId,
                 "worker-id": workerId
             }));
+
+            setInterval(function() {
+                ws.send(JSON.stringify({
+                    type: 'keep-alive'
+                }));
+            }, 60000); // Every 60 seconds send a keep-alive message
         };
 
         /**
@@ -251,12 +257,18 @@ $(function () {
             var shortcut = $('<span/>', {class: 'key'});
 
             var key = choice.toLowerCase().charAt(0);
-            if (!$.inArray(key, keys)) {
+
+            // If this key is already taken
+            console.log(key+' in '+keys+': '+ ($.inArray(key, keys) !== -1));
+            if ($.inArray(key, keys) !== -1) {
+                // Choose another one that isn't taken yet
                 for (var i in refKeys) {
                     key = refKeys[i];
-                    if (!$.inArray(key, keys)) break;
+                    // If this hasn't been taken yet, use this one
+                    if ($.inArray(key, keys) == -1) break;
                 }
             }
+
             keys.push(key);
 
             b.append(shortcut);

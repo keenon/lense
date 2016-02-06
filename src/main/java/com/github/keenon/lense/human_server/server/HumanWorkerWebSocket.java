@@ -315,7 +315,14 @@ public class HumanWorkerWebSocket extends HumanWorker {
 
                         // If we have queries waiting, launch one
                         checkAndLaunchQuery();
-                    } else {
+                    }
+
+                    // Receiving a keep-alive message
+
+                    else if (obj.get("type").equals("keep-alive")) {
+                        // Do nothing
+                    }
+                    else {
                         throw new IllegalStateException("Unrecognized message type: " + obj.toJSONString());
                     }
                 }

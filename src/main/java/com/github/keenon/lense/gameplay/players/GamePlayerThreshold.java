@@ -50,13 +50,15 @@ public class GamePlayerThreshold extends GamePlayer {
         }
         for (Game.Event e : game.stack) {
             if (e instanceof Game.HumanJobPosting) needJobPostings--;
+            if (e instanceof Game.HumanExit) needJobPostings++;
+        }
+
+        if (needJobPostings > 0) {
+            return new Game.HumanJobPosting();
         }
 
         for (Game.Event e : legalMoves) {
-            if (e instanceof Game.HumanJobPosting && needJobPostings > 0) {
-                return e;
-            }
-            else if (e instanceof Game.QueryLaunch) {
+            if (e instanceof Game.QueryLaunch) {
                 Game.QueryLaunch ql = (Game.QueryLaunch)e;
                 if (uncertainty[ql.variable] > queryThreshold) {
                     return ql;
