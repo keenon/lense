@@ -13,7 +13,7 @@ To add as a Maven dependency:
 ## Useful Links:
 
 - [the original paper](http://arxiv.org/abs/1506.03140)
-- [the experiments from the NIPS paper](http://github.com/keenon/lense-experiments)
+- [the experiments from the NIPS paper](http://github.com/keenon/lense-examples)
 - [the development repo (no longer maintained)](http://github.com/keenon/lense-dev)
 
 # A brief tutorial:
@@ -213,11 +213,11 @@ public LenseWithRetraining(HumanSource humans,
 To usefully explain what each of these constructor elements does is beyond the scope of this little tutorial.
 We're working on more comprehensive docs, but for now, just take a look at `com.github.keenon.lense.convenience.StaticBatchLense` in the code
 for a usage example.
-You can also look at the [experiments](http://github.com/keenon/lense-experiments) repo for runnable examples.
+You can also look at the [experiments](http://github.com/keenon/lense-examples) repo for runnable examples.
 
 ## More examples, and runnable code:
 
-Check out the [repo with the experiments](http://github.com/keenon/lense-experiments) we did for [the original paper](http://arxiv.org/abs/1506.03140).
+Check out the [repo with the experiments](http://github.com/keenon/lense-examples) we did for [the original paper](http://arxiv.org/abs/1506.03140).
 All those examples are runnable, and we even have a bunch of frozen human input that you can play back automatically on 3 different datasets, 
 so you can play around with LENSE without spending real money on MTurk.
 
