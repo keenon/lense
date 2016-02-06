@@ -1,8 +1,11 @@
 package com.github.keenon.lense.gameplay.players;
 
 import com.github.keenon.lense.gameplay.Game;
+import org.omg.PortableServer.ThreadPolicy;
+import sun.nio.ch.ThreadPool;
 
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.function.Function;
 
 /**
@@ -13,6 +16,15 @@ import java.util.function.Function;
 public class GamePlayerMCTS extends GamePlayer {
     double explorationConstant = 0.25;
     boolean multithreaded = true;
+    ThreadPoolExecutor executor = null;
+
+    public GamePlayerMCTS() {
+        executor = (ThreadPoolExecutor)Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+    }
+
+    public GamePlayerMCTS(ThreadPoolExecutor executor) {
+        this.executor = executor;
+    }
 
     @Override
     public Game.Event getNextMove(Game game, Function<Game, Double> utility) {
@@ -34,22 +46,27 @@ public class GamePlayerMCTS extends GamePlayer {
         GameTreeNode root = new GameTreeNode(game, null);
 
         if (multithreaded) {
-            Thread[] threads = new Thread[Runtime.getRuntime().availableProcessors()];
+            // Use the number of inactive threads, but no fewer than 2 threads
+            int numThreads = Math.max(executor.getPoolSize() - executor.getActiveCount(), 2);
+
+            Future<Void>[] threads = (Future<Void>[])new Future[numThreads];
             Game[] gameClones = game.getClones(threads.length);
 
             for (int i = 0; i < threads.length; i++) {
                 int iFinal = i;
-                threads[i] = new Thread(() -> {
+                Callable<Void> runnable = () -> {
                     for (int j = 0; j < Math.max(5,legalMoves.length * 2.0 / threads.length); j++) {
                         playOut(root, r, gameClones[iFinal], utility);
                     }
-                });
-                threads[i].start();
+                    return null;
+                };
+                threads[i] = executor.submit(runnable);
             }
             for (int i = 0; i < threads.length; i++) {
                 try {
-                    threads[i].join();
-                } catch (InterruptedException e) {
+                    threads[i].get();
+                } catch (Exception e) {
+                    System.err.println("Had exception while running child");
                     e.printStackTrace();
                 }
             }
