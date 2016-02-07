@@ -46,8 +46,8 @@ public class GamePlayerMCTS extends GamePlayer {
         GameTreeNode root = new GameTreeNode(game, null);
 
         if (multithreaded) {
-            // Use the number of inactive threads, but no fewer than 2 threads
-            int numThreads = Math.max(executor.getPoolSize() - executor.getActiveCount(), 2);
+            // Use the number of inactive threads, but no fewer than 1 thread
+            int numThreads = Math.max(1, executor.getPoolSize() - executor.getActiveCount());
 
             Future<Void>[] threads = (Future<Void>[])new Future[numThreads];
             Game[] gameClones = game.getClones(threads.length);
