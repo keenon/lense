@@ -74,6 +74,11 @@ public class GamePlayerNVoteTest {
         }
 
         @Override
+        public int getAvailableHumans(GraphicalModel model) {
+            return 1;
+        }
+
+        @Override
         public void close() {
             // do nothing
         }

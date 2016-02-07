@@ -240,6 +240,10 @@ public final class HumanAPIProto {
        * <code>JobRelease = 3;</code>
        */
       JobRelease(2, 3),
+      /**
+       * <code>NumAvailableQuery = 4;</code>
+       */
+      NumAvailableQuery(3, 4),
       ;
 
       /**
@@ -254,6 +258,10 @@ public final class HumanAPIProto {
        * <code>JobRelease = 3;</code>
        */
       public static final int JobRelease_VALUE = 3;
+      /**
+       * <code>NumAvailableQuery = 4;</code>
+       */
+      public static final int NumAvailableQuery_VALUE = 4;
 
 
       public final int getNumber() { return value; }
@@ -263,6 +271,7 @@ public final class HumanAPIProto {
           case 1: return JobPosting;
           case 2: return Query;
           case 3: return JobRelease;
+          case 4: return NumAvailableQuery;
           default: return null;
         }
       }
@@ -1258,6 +1267,10 @@ public final class HumanAPIProto {
        * <code>QueryFailure = 4;</code>
        */
       QueryFailure(3, 4),
+      /**
+       * <code>NumAvailableQuery = 5;</code>
+       */
+      NumAvailableQuery(4, 5),
       ;
 
       /**
@@ -1276,6 +1289,10 @@ public final class HumanAPIProto {
        * <code>QueryFailure = 4;</code>
        */
       public static final int QueryFailure_VALUE = 4;
+      /**
+       * <code>NumAvailableQuery = 5;</code>
+       */
+      public static final int NumAvailableQuery_VALUE = 5;
 
 
       public final int getNumber() { return value; }
@@ -1286,6 +1303,7 @@ public final class HumanAPIProto {
           case 2: return QueryAnswer;
           case 3: return HumanExit;
           case 4: return QueryFailure;
+          case 5: return NumAvailableQuery;
           default: return null;
         }
       }
@@ -1904,20 +1922,21 @@ public final class HumanAPIProto {
   static {
     java.lang.String[] descriptorData = {
       "\n\035src/main/proto/HumanAPI.proto\022$com.git" +
-      "hub.keenon.lense.human_server\"\324\001\n\nAPIReq" +
+      "hub.keenon.lense.human_server\"\353\001\n\nAPIReq" +
       "uest\022J\n\004type\030\001 \002(\0162<.com.github.keenon.l" +
       "ense.human_server.APIRequest.MessageType" +
       "\022\r\n\005jobID\030\002 \002(\005\022\022\n\nonlyOnceID\030\003 \001(\005\022\017\n\007q" +
-      "ueryID\030\004 \001(\005\022\014\n\004JSON\030\005 \001(\t\"8\n\013MessageTyp" +
+      "ueryID\030\004 \001(\005\022\014\n\004JSON\030\005 \001(\t\"O\n\013MessageTyp" +
       "e\022\016\n\nJobPosting\020\001\022\t\n\005Query\020\002\022\016\n\nJobRelea" +
-      "se\020\003\"\342\001\n\013APIResponse\022K\n\004type\030\001 \002(\0162=.com" +
-      ".github.keenon.lense.human_server.APIRes" +
-      "ponse.MessageType\022\r\n\005jobID\030\002 \002(\005\022\017\n\007quer",
-      "yID\030\003 \001(\005\022\023\n\013queryAnswer\030\004 \001(\005\"Q\n\013Messag" +
-      "eType\022\020\n\014HumanArrival\020\001\022\017\n\013QueryAnswer\020\002" +
-      "\022\r\n\tHumanExit\020\003\022\020\n\014QueryFailure\020\004B5\n$com" +
-      ".github.keenon.lense.human_serverB\rHuman" +
-      "APIProto"
+      "se\020\003\022\025\n\021NumAvailableQuery\020\004\"\371\001\n\013APIRespo" +
+      "nse\022K\n\004type\030\001 \002(\0162=.com.github.keenon.le" +
+      "nse.human_server.APIResponse.MessageType",
+      "\022\r\n\005jobID\030\002 \002(\005\022\017\n\007queryID\030\003 \001(\005\022\023\n\013quer" +
+      "yAnswer\030\004 \001(\005\"h\n\013MessageType\022\020\n\014HumanArr" +
+      "ival\020\001\022\017\n\013QueryAnswer\020\002\022\r\n\tHumanExit\020\003\022\020" +
+      "\n\014QueryFailure\020\004\022\025\n\021NumAvailableQuery\020\005B" +
+      "5\n$com.github.keenon.lense.human_serverB" +
+      "\rHumanAPIProto"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {

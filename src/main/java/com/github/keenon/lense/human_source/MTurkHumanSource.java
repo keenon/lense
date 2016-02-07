@@ -110,6 +110,14 @@ public class MTurkHumanSource extends HumanSource {
         }, humanHandle::disconnect);
     }
 
+    @Override
+    public int getAvailableHumans(GraphicalModel model) {
+        if (!onlyOnceIDs.containsKey(model)) {
+            onlyOnceIDs.put(model, onlyOnceIDs.size());
+        }
+        return humans.getGetNumberOfWorkersBlocking(onlyOnceIDs.get(model));
+    }
+
     /**
      * Models a single human doing a single job on MTurk.
      */

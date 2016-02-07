@@ -158,6 +158,11 @@ public class LenseTest {
         }
 
         @Override
+        public int getAvailableHumans(GraphicalModel model) {
+            return 1;
+        }
+
+        @Override
         public void close() {
             for (DelayHumanHandle handle : handles) handle.release();
         }

@@ -68,6 +68,16 @@ public class ModelTagsHumanSource extends HumanSource {
     }
 
     @Override
+    public int getAvailableHumans(GraphicalModel model) {
+        ModelQueryRecord qr = ModelQueryRecord.getQueryRecordFor(model);
+        int max = Integer.MAX_VALUE;
+        for (int i = 0; i < model.getVariableSizes().length; i++) {
+            max = Math.min(max, qr.getResponses(i).size());
+        }
+        return max - jobsGivenOut.get(model).get();
+    }
+
+    @Override
     public void close() {
         // This does nothing, since we're not using network here
     }

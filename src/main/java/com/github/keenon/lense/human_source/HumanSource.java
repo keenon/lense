@@ -24,6 +24,13 @@ public abstract class HumanSource {
     public abstract void makeJobPosting(GraphicalModel model, Consumer<HumanHandle> jobAnsweredCallback);
 
     /**
+     * This tells you how many humans are currently at the server who are able to answer queries about this
+     * GraphicalModel.
+     * @return the count of humans who haven't engaged with this GraphicalModel
+     */
+    public abstract int getAvailableHumans(GraphicalModel model);
+
+    /**
      * Closes the system
      */
     public abstract void close();

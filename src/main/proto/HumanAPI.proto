@@ -8,6 +8,7 @@ message APIRequest {
         JobPosting = 1;
         Query = 2;
         JobRelease = 3;
+        NumAvailableQuery = 4;
     }
 
     required MessageType type = 1;
@@ -29,6 +30,7 @@ message APIResponse {
         QueryAnswer = 2;
         HumanExit = 3;
         QueryFailure = 4;
+        NumAvailableQuery = 5;
     }
     required MessageType type = 1;
     // All communication needs to reference the ID of the job being done

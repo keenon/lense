@@ -275,6 +275,37 @@ public class HumanSourceServer implements Runnable {
                                 }
                             }
                             if (postingToDestroy != null) jobPostings.remove(postingToDestroy);
+                        } else if (req.getType() == HumanAPIProto.APIRequest.MessageType.NumAvailableQuery) {
+                            int onlyOnceID = req.getOnlyOnceID();
+
+                            // Immediately send a response
+
+                            HumanAPIProto.APIResponse.Builder b = HumanAPIProto.APIResponse.newBuilder();
+                            b.setType(HumanAPIProto.APIResponse.MessageType.NumAvailableQuery);
+                            b.setJobID(onlyOnceID);
+
+                            int numAvailable = 0;
+
+                            // For each human that's currently connected, check if they've already used this onlyOnceID
+
+                            for (HumanWorker human : humans) {
+                                if (!humansUsedOnlyOnceIDs.containsKey(human) || !humansUsedOnlyOnceIDs.get(human).contains(onlyOnceID)) {
+                                    numAvailable++;
+                                }
+                            }
+
+                            System.err.println("Num available: "+numAvailable);
+
+                            b.setQueryAnswer(numAvailable);
+
+                            synchronized (s) {
+                                try {
+                                    b.build().writeDelimitedTo(s.getOutputStream());
+                                    s.getOutputStream().flush();
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
                         } else {
                             throw new IllegalStateException("Unrecognized request type: " + req.getType());
                         }

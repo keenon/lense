@@ -4,8 +4,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -47,6 +46,7 @@ public class HumanSourceClient {
     }
 
     List<JobHandle> jobHandles = new ArrayList<>();
+    Map<Integer, ArrayDeque<Consumer<Integer>>> availableWorkersCallbacks = new HashMap<>();
 
     /**
      * This lists a new job with the server.
@@ -77,6 +77,60 @@ public class HumanSourceClient {
         }
 
         return handle;
+    }
+
+    /**
+     * Gets the number of workers available to help label a given "onlyOnceID", which is to say all workers who aren't
+     * already engaged with this onlyOnceID.
+     *
+     * @param onlyOnceID the ID we'd like to exclude from the count
+     * @param numAvailableCallback a callback for this count
+     */
+    public synchronized void getNumberOfWorkers(int onlyOnceID, Consumer<Integer> numAvailableCallback) {
+        if (!availableWorkersCallbacks.containsKey(onlyOnceID)) {
+            availableWorkersCallbacks.put(onlyOnceID, new ArrayDeque<>());
+        }
+        availableWorkersCallbacks.get(onlyOnceID).add(numAvailableCallback);
+
+        HumanAPIProto.APIRequest.Builder b = HumanAPIProto.APIRequest.newBuilder();
+        b.setJobID(0);
+        b.setType(HumanAPIProto.APIRequest.MessageType.NumAvailableQuery);
+        b.setOnlyOnceID(onlyOnceID);
+
+        try {
+            synchronized (socket) {
+                b.build().writeDelimitedTo(socket.getOutputStream());
+                socket.getOutputStream().flush();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * A blocking version of getNumberOfWorkers, will hang up to a second until a response is given, returns -1 on a
+     * timeout (which should lead to the correct behavior, it means you shouldn't be asking for humans anyways).
+     *
+     * @param onlyOnceID the ID we'd like to exclude from the count
+     * @return the count
+     */
+    public int getGetNumberOfWorkersBlocking(int onlyOnceID) {
+        final int[] available = {0};
+        Object barrier = new Object();
+        getNumberOfWorkers(onlyOnceID, (i) -> {
+            available[0] = i;
+            synchronized (barrier) {
+                barrier.notify();
+            }
+        });
+        try {
+            synchronized (barrier) {
+                barrier.wait(1000);
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return available[0];
     }
 
     /**
@@ -186,6 +240,12 @@ public class HumanSourceClient {
                 case QueryFailure:
                     queryID = response.getQueryID();
                     jobHandles.get(jobID).queryFailedCallbacks.get(queryID).run();
+                    break;
+                case NumAvailableQuery:
+                    int onlyOnceID = response.getJobID();
+                    if (availableWorkersCallbacks.containsKey(onlyOnceID) && availableWorkersCallbacks.get(onlyOnceID).size() > 0) {
+                        availableWorkersCallbacks.get(onlyOnceID).poll().accept(response.getQueryAnswer());
+                    }
                     break;
                 default:
                     System.err.println("Unrecognized message type: " + response.getType());

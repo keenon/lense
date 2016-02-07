@@ -10,6 +10,7 @@ import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -158,6 +159,77 @@ public class HumanSourceServerTest {
         public void sayGoodbye() {
 
         }
+    }
+
+    @Theory
+    public void testNumAvailable(@ForAll(sampleSize = 2) @InRange(maxInt = 50, minInt = 5) int numThreads,
+                                 @ForAll(sampleSize = 2) @InRange(maxInt = 100, minInt = 20) int numJobs) throws Exception {
+        HumanSourceServer server = new HumanSourceServer();
+        new Thread(server).start();
+
+        // Wait for the server to start up
+        Thread.sleep(200);
+
+        Random r = new Random();
+
+        TestWorker[] testWorkers = new TestWorker[numThreads];
+        for (int i = 0; i < testWorkers.length; i++) {
+            final int iFinal = i;
+            new Thread(() -> {
+                testWorkers[iFinal] = new BabyConsumer();
+                testWorkers[iFinal].crashCallback = () -> {
+                    // TODO
+                };
+                server.registerHuman(testWorkers[iFinal]);
+            }).start();
+        }
+
+        HumanSourceClient client = new HumanSourceClient("localhost", 2109);
+
+        // Wait for everything to register
+        Thread.sleep(200);
+
+
+        int onlyOnceID = r.nextInt();
+
+        assertEquals(testWorkers.length, client.getGetNumberOfWorkersBlocking(onlyOnceID));
+
+        int createJobs = r.nextInt(testWorkers.length);
+        final int[] numAccepted = {0};
+        Object acceptedBarrier = new Object();
+
+        for (int i = 0; i < createJobs; i++) {
+            HumanSourceClient.JobHandle handle = client.createJob("", onlyOnceID, () -> {
+                // Job accepted
+                numAccepted[0]++;
+                synchronized (acceptedBarrier) {
+                    acceptedBarrier.notify();
+                }
+            }, () -> {
+                // Job failed
+                numAccepted[0]++;
+                synchronized (acceptedBarrier) {
+                    acceptedBarrier.notify();
+                }
+            });
+        }
+
+        while (numAccepted[0] < createJobs) {
+            synchronized (acceptedBarrier) {
+                acceptedBarrier.wait();
+            }
+        }
+
+        assertEquals(testWorkers.length - createJobs, client.getGetNumberOfWorkersBlocking(onlyOnceID));
+
+        System.err.println("Closing handles");
+        client.close();
+
+        System.err.println("Killing server");
+        server.stop();
+
+        // Wait for the server to stop
+        Thread.sleep(200);
     }
 
     @Theory
