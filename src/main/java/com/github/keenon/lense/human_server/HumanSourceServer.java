@@ -30,7 +30,7 @@ public class HumanSourceServer implements Runnable {
         new Thread(new HumanSourceServer()).start();
         JettyServer server = new JettyServer();
         if (args.length > 0 && args[0].equals("root")) {
-            server.useDevPorts = true;
+            server.useDevPorts = false;
         }
         new Thread(server).start();
     }
