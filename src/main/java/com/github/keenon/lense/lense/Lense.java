@@ -52,7 +52,7 @@ public class Lense {
      * @return a best guess for the true labels of the model
      */
     public int[] getMAP(GraphicalModel model, Object moveMonitor) {
-        Game game = new Game(model, weights, humans.getSimulatedProvider());
+        Game game = new Game(model, weights, humans.getSimulatedProvider(), humans.getAvailableHumans(model));
         return playGame(game, moveMonitor).getMAP();
     }
 

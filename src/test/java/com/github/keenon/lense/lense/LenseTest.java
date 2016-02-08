@@ -41,8 +41,8 @@ public class LenseTest {
 
         // Check that the system actually returns and doesn't deadlock on some strange edge case
 
-        Game g = new Game(model, weights, l.humans.getSimulatedProvider());
-        g.maxAllowedJobPostings = 1;
+        Game g = new Game(model, weights, l.humans.getSimulatedProvider(), l.humans.getAvailableHumans(model));
+        g.humansAvailableServerSide = 1;
 
         // Clear the previous record, so that we can check our results against previous recorded results
 

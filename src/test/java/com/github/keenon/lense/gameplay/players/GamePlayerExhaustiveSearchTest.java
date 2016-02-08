@@ -25,7 +25,7 @@ public class GamePlayerExhaustiveSearchTest {
     @Theory
     public void testQueries(@ForAll(sampleSize = 3) @From(GameTest.GameGenerator.class) Game game) throws Exception {
         Random r = new Random(23);
-        game.maxAllowedJobPostings = 2;
+        game.humansAvailableServerSide = 2;
 
         GamePlayerExhaustiveSearch bruteForce = new GamePlayerExhaustiveSearch();
 

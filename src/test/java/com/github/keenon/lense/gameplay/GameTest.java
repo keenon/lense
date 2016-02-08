@@ -273,7 +273,7 @@ public class GameTest {
             ContinuousDistribution humanDelay = new DiscreteSetDistribution(new long[]{ 2000L }); // assume each query deterministically takes 2 seconds
 
             Game.ArtificialHumanProvider humanSampler = new Game.ArtificialHumanAgreementDisagrementProvider(agreementVector, disagreementVector, humanDelay);
-            return new Game(modelGenerator.generate(sourceOfRandomness, generationStatus), weights, humanSampler);
+            return new Game(modelGenerator.generate(sourceOfRandomness, generationStatus), weights, humanSampler, 2);
         }
     }
 

@@ -115,7 +115,7 @@ public class LenseWithRetraining {
      * @return a best guess for the true labels of the model
      */
     public int[] getMAP(GraphicalModel model, Object moveMonitor) {
-        Game game = new Game(model, lense.weights, lense.humans.getSimulatedProvider());
+        Game game = new Game(model, lense.weights, lense.humans.getSimulatedProvider(), lense.humans.getAvailableHumans(model));
         return playGame(game, moveMonitor).getMAP();
     }
 

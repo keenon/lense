@@ -34,12 +34,15 @@ public class GamePlayerMCTS extends GamePlayer {
 
         // No need to waste computation here
         Game.Event[] legalMoves = game.getLegalMoves();
-        if (legalMoves.length == 1) return game.getLegalMoves()[0];
+        if (legalMoves.length == 1) return legalMoves[0];
         // This isn't part of single-game playing, so just assume all global resources available
         // This interferes with the test against the exhaustive game player, so we need to be careful
         if (!assertsEnabled()) {
+            // If we can, make a job posting
             for (Game.Event e : legalMoves) {
-                if (e instanceof Game.HumanJobPosting) return e;
+                if (e instanceof Game.HumanJobPosting) {
+                    return new Game.HumanJobPosting();
+                }
             }
         }
 

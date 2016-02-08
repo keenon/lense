@@ -287,17 +287,17 @@ public abstract class StaticBatchLense {
             ConcatVector weights;
             if (parallelBatchIgnoreRetraining()) weights = initialWeights();
             else weights = lenseWithRetraining.weights;
-            Game game = new Game(model.cloneModel(), weights, humanSource.getSimulatedProvider());
+            Game game = new Game(model.cloneModel(), weights, humanSource.getSimulatedProvider(), humanSource.getAvailableHumans(model));
 
             // Set max allowed job postings to the minimum number of tags on any variable in the model
             if (humanSource instanceof ModelTagsHumanSource) {
-                game.maxAllowedJobPostings = 100;
+                game.humansAvailableServerSide = 100;
                 ModelQueryRecord mqr = ModelQueryRecord.getQueryRecordFor(model);
                 for (int j = 0; j < model.getVariableSizes().length; j++) {
-                    if (mqr.getResponses(j).size() < game.maxAllowedJobPostings)
-                        game.maxAllowedJobPostings = mqr.getResponses(j).size();
+                    if (mqr.getResponses(j).size() < game.humansAvailableServerSide)
+                        game.humansAvailableServerSide = mqr.getResponses(j).size();
                 }
-                System.err.println("Job postings allowed: "+game.maxAllowedJobPostings);
+                System.err.println("Job postings allowed: "+game.humansAvailableServerSide);
             }
 
             if (parallelBatchIgnoreRetraining()) {

@@ -34,7 +34,7 @@ public class GamePlayerNVoteTest {
                           @ForAll(sampleSize = 1) @InRange(minInt = 1, maxInt = 5) int n) throws Exception {
         GamePlayer nVoter = new GamePlayerNVote(n, false);
         Lense lense = new Lense(new BasicHumanSource(), nVoter, (game) -> 0.0, new ConcatVector(0));
-        Game game = new Game(model, new ConcatVector(0), null);
+        Game game = new Game(model, new ConcatVector(0), null, 2);
         lense.playGame(game, null);
 
         Map<Integer,Integer> responseCount = new HashMap<>();
@@ -75,7 +75,7 @@ public class GamePlayerNVoteTest {
 
         @Override
         public int getAvailableHumans(GraphicalModel model) {
-            return 1;
+            return 0;
         }
 
         @Override

@@ -1,5 +1,6 @@
 package com.github.keenon.lense.gameplay;
 
+import com.github.keenon.lense.human_source.HumanSource;
 import com.github.keenon.loglinear.inference.CliqueTree;
 import com.github.keenon.loglinear.model.ConcatVector;
 import com.github.keenon.loglinear.model.ConcatVectorTable;
@@ -32,8 +33,9 @@ public class Game {
 
     // Parameters for sampling events
 
-    public int maxAllowedJobPostings = 2; // this resource limit keeps the game tree finite
+    public int humansAvailableServerSide = 2; // this resource limit keeps the game tree finite
     public ArtificialHumanProvider humanProvider;
+    public Optional<HumanSource> humanSource;
 
     /**
      * This allows the game to configure the kinds of additional io.hybridcrowd.humans it assumes will show up.
@@ -101,12 +103,13 @@ public class Game {
      * @param weights the weights to use
      * @param humanSampler the system for generating hypothetical io.hybridcrowd.humans to arrive and participate in the game
      */
-    public Game(GraphicalModel model, ConcatVector weights, ArtificialHumanProvider humanSampler) {
+    public Game(GraphicalModel model, ConcatVector weights, ArtificialHumanProvider humanSampler, int humansAvailableServerSide) {
         this.model = model;
         variableSizes = model.getVariableSizes();
         this.weights = weights;
         tree = new CliqueTree(model, weights);
         this.humanProvider = humanSampler;
+        this.humansAvailableServerSide = humansAvailableServerSide;
 
         // Initialize the list that we'll use for available annotators for each variable
 
@@ -194,14 +197,16 @@ public class Game {
         for (Event e : stack) {
             if (e instanceof HumanJobPosting) numJobPostings++;
         }
-        boolean jobPostingAllowed = numJobPostings < maxAllowedJobPostings;
+        boolean jobPostingAllowed = numJobPostings < humansAvailableServerSide;
 
+        /*
         // Don't allow new job postings after the first query has been launched, or else the game trees get unnecessarily
-        // large
+        // large, if we're not in production. This is annoying in production, so we're dropping it.
 
         for (Event e : stack) {
             if (e instanceof QueryLaunch) jobPostingAllowed = false;
         }
+        */
 
         int numLegalMoves =
                 availableAnnotators.values().stream().mapToInt(Set::size).sum() + // Observation requests
@@ -420,7 +425,7 @@ public class Game {
 
         Game[] clones = new Game[numClones];
         for (int i = 0; i < numClones; i++) {
-            clones[i] = new Game(model.cloneModel(), weights, humanProvider);
+            clones[i] = new Game(model.cloneModel(), weights, humanProvider, humansAvailableServerSide);
 
             Map<Event,Event> oldToNew = new IdentityHashMap<>();
             for (Event e : events) {

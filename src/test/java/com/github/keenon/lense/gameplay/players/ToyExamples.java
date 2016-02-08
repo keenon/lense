@@ -32,7 +32,7 @@ public class ToyExamples {
         // Run tests
 
         Random r;
-        Game g = new Game(m, vec(1.0), new Game.ArtificialHumanAgreementDisagrementProvider(vec(Math.log(1.0 - humanErrorRate)), vec(Math.log(humanErrorRate)), new DiscreteSetDistribution(new long[]{2000L})));
+        Game g = new Game(m, vec(1.0), new Game.ArtificialHumanAgreementDisagrementProvider(vec(Math.log(1.0 - humanErrorRate)), vec(Math.log(humanErrorRate)), new DiscreteSetDistribution(new long[]{2000L})), 2);
 
         g.resetEvents();
         r = new Random(42);

@@ -28,7 +28,7 @@ public class GamePlayerMCTSTest {
         Random r = new Random(42);
         GamePlayerMCTS mcts = new GamePlayerMCTS();
         GamePlayerRandom random = new GamePlayerRandom(r);
-        game.maxAllowedJobPostings = 1;
+        game.humansAvailableServerSide = 1;
 
         int numMoves = 0;
         int numCorrect = 0;

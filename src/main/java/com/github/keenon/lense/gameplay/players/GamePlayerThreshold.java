@@ -54,7 +54,16 @@ public class GamePlayerThreshold extends GamePlayer {
         }
 
         if (needJobPostings > 0) {
-            return new Game.HumanJobPosting();
+            // If we can, make a job posting
+            for (Game.Event e : legalMoves) {
+                if (e instanceof Game.HumanJobPosting) {
+                    return new Game.HumanJobPosting();
+                }
+            }
+            // Otherwise, if it's ok to wait for humans, do that
+            if (!production) {
+                return new Game.HumanJobPosting();
+            }
         }
 
         for (Game.Event e : legalMoves) {
