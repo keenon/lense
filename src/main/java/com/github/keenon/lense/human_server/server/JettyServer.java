@@ -23,6 +23,8 @@ public class JettyServer implements Runnable {
     private static final String KEYSTORE_PASS = "passwd";
     private static final String WEB_APP_CONTEXT = "src/main/lense-webapp";
 
+    public boolean useDevPorts = true;
+
     public static void main(String[] args) {
         new JettyServer().run();
     }
@@ -35,10 +37,8 @@ public class JettyServer implements Runnable {
 
         Server server = new Server(threadPool);
 
-        boolean useDevPorts = false;
-
-        int publicPort = useDevPorts ? 8081 : 8080;
-        int securePort = useDevPorts ? 8444 : 8443;
+        int publicPort = useDevPorts ? 8080 : 80;
+        int securePort = useDevPorts ? 8443 : 443;
 
         HttpConfiguration http_config = new HttpConfiguration();
         http_config.setSecureScheme("https");

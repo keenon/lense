@@ -28,7 +28,11 @@ public class HumanSourceServer implements Runnable {
 
     public static void main(String[] args) {
         new Thread(new HumanSourceServer()).start();
-        new Thread(new JettyServer()).start();
+        JettyServer server = new JettyServer();
+        if (args.length > 0 && args[0].equals("root")) {
+            server.useDevPorts = true;
+        }
+        new Thread(server).start();
     }
 
     // A list of humans
