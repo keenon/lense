@@ -1,6 +1,8 @@
 package com.github.keenon.lense.human_server;
 
 import com.github.keenon.lense.human_server.server.JettyServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -17,6 +19,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  * interface.
  */
 public class HumanSourceServer implements Runnable {
+    /**
+     * An SLF4J Logger for this class.
+     */
+    private static final Logger log = LoggerFactory.getLogger(HumanSourceServer.class);
+
     public static HumanSourceServer currentInstance = null;
 
     public static void main(String[] args) {
@@ -294,7 +301,7 @@ public class HumanSourceServer implements Runnable {
                                 }
                             }
 
-                            System.err.println("Num available: "+numAvailable);
+                            log.info("Num available: " + numAvailable);
 
                             b.setQueryAnswer(numAvailable);
 
@@ -312,7 +319,7 @@ public class HumanSourceServer implements Runnable {
                     }
                 }
                 catch(Exception e) {
-                    System.err.println("Closing socket "+socketID);
+                    log.info("Closing socket " + socketID);
                     e.printStackTrace();
                     release();
                     try {
@@ -333,7 +340,7 @@ public class HumanSourceServer implements Runnable {
          * have.
          */
         private void release() {
-            System.err.println("Releasing socket "+socketID);
+            log.info("Releasing socket " + socketID);
             
             synchronized (currentInstance) {
                 for (HumanWorker human : humans) {

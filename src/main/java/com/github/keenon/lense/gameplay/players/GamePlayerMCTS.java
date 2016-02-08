@@ -2,6 +2,8 @@ package com.github.keenon.lense.gameplay.players;
 
 import com.github.keenon.lense.gameplay.Game;
 import org.omg.PortableServer.ThreadPolicy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import sun.nio.ch.ThreadPool;
 
 import java.util.*;
@@ -14,6 +16,11 @@ import java.util.function.Function;
  * A sampling based gameplayer that can handle time as a part of the game.
  */
 public class GamePlayerMCTS extends GamePlayer {
+    /**
+     * An SLF4J Logger for this class.
+     */
+    private static final Logger log = LoggerFactory.getLogger(GamePlayerMCTS.class);
+
     double explorationConstant = 0.25;
     boolean multithreaded = true;
     ThreadPoolExecutor executor = null;
@@ -69,7 +76,7 @@ public class GamePlayerMCTS extends GamePlayer {
                 try {
                     threads[i].get();
                 } catch (Exception e) {
-                    System.err.println("Had exception while running child");
+                    log.warn("Had exception while running child");
                     e.printStackTrace();
                 }
             }
@@ -80,11 +87,11 @@ public class GamePlayerMCTS extends GamePlayer {
             }
         }
 
-        System.err.println("MCTS results:");
+        log.info("MCTS results:");
         for (GameTreeNode node : root.children) {
             double avgUtil = node.observedUtility / node.timesVisited;
             double uct = (node.observedUtility / node.timesVisited) + explorationConstant*Math.sqrt(Math.log(root.timesVisited)/node.timesVisited);
-            System.err.println("\t"+node.originalEvent+": "+node.timesVisited+", avg util: "+avgUtil+", UCT: "+uct);
+            log.info("\t"+node.originalEvent+": "+node.timesVisited+", avg util: "+avgUtil+", UCT: "+uct);
         }
 
         GameTreeNode choiceNode = root.maxChoiceBy((node) -> (node.observedUtility / node.timesVisited));

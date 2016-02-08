@@ -8,6 +8,8 @@ import com.github.keenon.lense.human_server.HumanSourceServer;
 import com.github.keenon.lense.human_server.HumanWorker;
 import com.github.keenon.lense.human_server.payments.PaymentsThread;
 import com.github.keenon.lense.human_server.server.JettyServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,6 +21,11 @@ import java.io.InputStreamReader;
  * This creates a whole integrated system for recruiting, allocating, querying, and paying MTurk workers.
  */
 public class MTurkSystem {
+    /**
+     * An SLF4J Logger for this class.
+     */
+    private static final Logger log = LoggerFactory.getLogger(MTurkSystem.class);
+
     HumanSourceServer humanSourceServer;
     JettyServer jettyServer;
     PaymentsThread paymentsThread;
@@ -58,21 +65,21 @@ public class MTurkSystem {
     public static void main(String[] args) throws IOException, InterruptedException {
         MTurkSystem system = new MTurkSystem();
 
-        System.out.println();
-        System.out.println("**********************");
-        System.out.println("**********************");
-        System.out.println("* TURK SERVER SYSTEM *");
-        System.out.println("**********************");
-        System.out.println("**********************");
-        System.out.println();
-        System.out.println("Type \"help\" to see a list of commands");
-        System.out.println();
+        log.info("");
+        log.info("**********************");
+        log.info("**********************");
+        log.info("* TURK SERVER SYSTEM *");
+        log.info("**********************");
+        log.info("**********************");
+        log.info("");
+        log.info("Type \"help\" to see a list of commands");
+        log.info("");
 
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         while (true) {
             System.out.print("> ");
             String read = br.readLine().trim();
-            System.out.println("Read \""+read+"\"");
+            log.info("Read \"" + read + "\"");
 
             if (read.equals("exit") || read.equals("quit")) {
                 system.stop();
@@ -80,12 +87,12 @@ public class MTurkSystem {
                 System.exit(0);
             }
             else if (read.equals("turk count")) {
-                System.out.println("Currently active workers: "+ system.humanSourceServer.humans.size());
-                System.out.println("Hiring posts outstanding: TODO");
+                log.info("Currently active workers: " + system.humanSourceServer.humans.size());
+                log.info("Hiring posts outstanding: TODO");
             }
             else if (read.equals("send everyone home")) {
-                System.out.println("Making all user browsers submit early.");
-                System.out.println("Please wait for the output from the payment system to quiet down before shutting down the server, otherwise you may fail to pay people.");
+                log.info("Making all user browsers submit early.");
+                log.info("Please wait for the output from the payment system to quiet down before shutting down the server, otherwise you may fail to pay people.");
                 for (HumanWorker human : system.humanSourceServer.humans) {
                     human.sayGoodbye();
                 }
@@ -93,29 +100,29 @@ public class MTurkSystem {
             else if (read.startsWith("hire")) {
                 String[] parts = read.split(" ");
                 if (parts.length != 2) {
-                    System.out.println("Improper use of \"hire\" command, needs to be followed by a single integer, as in \"hire 2\"");
+                    log.info("Improper use of \"hire\" command, needs to be followed by a single integer, as in \"hire 2\"");
                 }
                 else {
                     try {
                         int numToHire = Integer.parseInt(parts[1]);
                         system.hireWorkers(numToHire);
-                        System.out.println("Successfully posted a HIT for "+numToHire+" workers!");
+                        log.info("Successfully posted a HIT for " + numToHire + " workers!");
                     }
                     catch (NumberFormatException e) {
-                        System.out.println("Improper use of \"hire\" command, needs to be followed by a single integer, as in \"hire 2\"");
+                        log.info("Improper use of \"hire\" command, needs to be followed by a single integer, as in \"hire 2\"");
                     }
                 }
             }
             else if (read.equals("help")) {
-                System.out.println("Supported commands:");
-                System.out.println("\texit - quits the program");
-                System.out.println("\tquit - quits the program");
-                System.out.println("\tturk count - returns the current number of workers in the system, and number of unanswered HITs still out there");
-                System.out.println("\tsend everyone home - terminates all worker employment immediately");
-                System.out.println("\thire N - where N is some integer, as in \"hire 3\", which hires 3 people");
+                log.info("Supported commands:");
+                log.info("\texit - quits the program");
+                log.info("\tquit - quits the program");
+                log.info("\tturk count - returns the current number of workers in the system, and number of unanswered HITs still out there");
+                log.info("\tsend everyone home - terminates all worker employment immediately");
+                log.info("\thire N - where N is some integer, as in \"hire 3\", which hires 3 people");
             }
             else {
-                System.out.println("Command unrecognized. Type \"help\" for a list of commands");
+                log.info("Command unrecognized. Type \"help\" for a list of commands");
             }
         }
     }
@@ -142,8 +149,8 @@ public class MTurkSystem {
             HIT hit = mturkService.createHIT(title, description, reward, question, numWorkersToHire);
 
             String url = mturkService.getWebsiteURL()+"/mturk/preview?groupId="+hit.getHITTypeId();
-            System.out.println("Created HIT: " + hit.getHITId());
-            System.out.println("You can see it here: "+url);
+            log.info("Created HIT: " + hit.getHITId());
+            log.info("You can see it here: " + url);
             return url;
         } catch (Exception e) {
             e.printStackTrace();
@@ -167,7 +174,7 @@ public class MTurkSystem {
 
         try {
             mturkService.approveAssignment(assignmentID, "Automated assignment approval");
-            System.out.println("Successfully approved HIT for "+workerID+":"+assignmentID+", who has an outstanding bonus (not yet sent) of $"+amountOwed);
+            log.info("Successfully approved HIT for " + workerID + ":" + assignmentID + ", who has an outstanding bonus (not yet sent) of $" + amountOwed);
         }
         catch (Exception e) {
             // Potentially already approved the assignment. Don't panic yet.
@@ -178,13 +185,13 @@ public class MTurkSystem {
 
         try {
             mturkService.grantBonus(workerID, amountOwed, assignmentID, "Automated bonus payment of $"+amountOwed);
-            System.out.println("Successfully approved bonus for "+workerID+":"+assignmentID+" of $"+amountOwed);
+            log.info("Successfully approved bonus for " + workerID + ":" + assignmentID + " of $" + amountOwed);
             // If we successfully grant the bonus, then we're good to go, and everything is grand, so return a
             // confirmation
             return true;
         }
         catch (Exception e) {
-            System.out.println("Failed to approve bonus for " + workerID + ":" + assignmentID + " of $" + amountOwed);
+            log.info("Failed to approve bonus for " + workerID + ":" + assignmentID + " of $" + amountOwed);
             e.printStackTrace();
             // If anything went wrong, we're not done here yet, so put this back on the queue to get payed later.
             return false;

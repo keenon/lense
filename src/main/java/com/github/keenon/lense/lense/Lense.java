@@ -10,6 +10,8 @@ import com.github.keenon.lense.gameplay.players.GamePlayer;
 import com.github.keenon.lense.human_source.HumanHandle;
 import com.github.keenon.lense.human_source.HumanSource;
 import com.github.keenon.lense.human_source.ModelTagsHumanSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.function.Function;
@@ -24,6 +26,11 @@ import java.util.function.Function;
  * Mostly, we just need to relay commands from the gameplayer to the humans.
  */
 public class Lense {
+    /**
+     * An SLF4J Logger for this class.
+     */
+    private static final Logger log = LoggerFactory.getLogger(Lense.class);
+
     HumanSource humans;
     GamePlayer gamePlayer;
     Function<Game, Double> utility;
@@ -119,7 +126,7 @@ public class Lense {
             // Wait pauses until external events wake the game up
 
             else if (event instanceof Game.Wait) {
-                System.err.println("Wait");
+                log.info("Wait");
                 try {
                     synchronized (externalEvents) {
                         while (externalEvents.isEmpty()) {
@@ -138,17 +145,17 @@ public class Lense {
 
                 boolean[] responseReceived = new boolean[]{false};
 
-                System.err.println("Query launched on "+ql.variable);
+                log.info("Query launched on "+ql.variable);
 
                 humanHandles.get(ql.human).makeQuery(ql.variable, (response) -> {
                     if (responseReceived[0]) {
-                        System.err.println("Getting human response twice! (query success)");
-                        System.err.println("TOKEN: "+game.model.getVariableMetaDataByReference(ql.variable).get("TOKEN"));
+                        log.info("Getting human response twice! (query success)");
+                        log.info("TOKEN: "+game.model.getVariableMetaDataByReference(ql.variable).get("TOKEN"));
                         return;
                     }
                     responseReceived[0] = true;
 
-                    System.err.println("Response received on "+ql.variable+"="+response);
+                    log.info("Response received on "+ql.variable+"="+response);
 
                     if (recordQueries) {
                         long delay = System.currentTimeMillis() - humanLastActivityTimestamp.get(ql.human);
@@ -164,8 +171,8 @@ public class Lense {
                     }
                 }, () -> {
                     if (responseReceived[0]) {
-                        System.err.println("Getting human response twice! (query failed)");
-                        System.err.println("TOKEN: "+game.model.getVariableMetaDataByReference(ql.variable).get("TOKEN"));
+                        log.info("Getting human response twice! (query failed)");
+                        log.info("TOKEN: "+game.model.getVariableMetaDataByReference(ql.variable).get("TOKEN"));
                         return;
                     }
                     responseReceived[0] = true;
@@ -182,13 +189,13 @@ public class Lense {
             // Job postings
 
             else if (event instanceof Game.HumanJobPosting) {
-                System.err.println("Make Job Posting");
+                log.info("Make Job Posting");
 
                 boolean[] responseReceived = new boolean[]{false};
 
                 humans.makeJobPosting(game.model, (humanHandle) -> {
                     if (responseReceived[0]) {
-                        System.err.println("Getting human arrival twice!");
+                        log.info("Getting human arrival twice!");
                         return;
                     }
                     responseReceived[0] = true;
@@ -199,7 +206,7 @@ public class Lense {
                             (Game.HumanJobPosting)event,
                             new HashMap<>());
 
-                    System.err.println("Human arrived");
+                    log.info("Human arrived");
 
                     boolean[] disconnectReceived = new boolean[]{false};
 
@@ -207,12 +214,12 @@ public class Lense {
                     // a game.
                     humanHandle.setDisconnectedCallback(() -> {
                         if (disconnectReceived[0]) {
-                            System.err.println("Disconnect received twice!");
+                            log.warn("Disconnect received twice!");
                             return;
                         }
                         disconnectReceived[0] = true;
 
-                        System.err.println("Human disconnected");
+                        log.info("Human disconnected");
 
                         // Insert a human exit
                         Game.HumanExit he = new Game.HumanExit(humanArrival);

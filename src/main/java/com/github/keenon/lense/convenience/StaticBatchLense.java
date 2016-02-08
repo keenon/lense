@@ -13,6 +13,8 @@ import com.github.keenon.loglinear.model.GraphicalModel;
 import com.github.keenon.loglinear.storage.ModelBatch;
 import com.github.keenon.lense.human_source.HumanSource;
 import com.github.keenon.lense.human_source.ModelTagsHumanSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -31,6 +33,11 @@ import java.util.function.Consumer;
  * This handles the basic structure of running LENSE in batches, while storing intermediate results.
  */
 public abstract class StaticBatchLense {
+    /**
+     * An SLF4J Logger for this class.
+     */
+    private static final Logger log = LoggerFactory.getLogger(StaticBatchLense.class);
+
     protected ConcatVectorNamespace namespace = new ConcatVectorNamespace();
     protected ContinuousDistribution observedHumanDelays = null;
 
@@ -269,9 +276,9 @@ public abstract class StaticBatchLense {
         }).start();
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            System.err.println("Waiting for writes to complete");
+            log.info("Waiting for writes to complete");
             synchronized (batch) {
-                System.err.println("Writes completed");
+                log.info("Writes completed");
             }
         }));
 
@@ -297,7 +304,7 @@ public abstract class StaticBatchLense {
                     if (mqr.getResponses(j).size() < game.humansAvailableServerSide)
                         game.humansAvailableServerSide = mqr.getResponses(j).size();
                 }
-                System.err.println("Job postings allowed: "+game.humansAvailableServerSide);
+                log.info("Job postings allowed: " + game.humansAvailableServerSide);
             }
 
             if (parallelBatchIgnoreRetraining()) {
@@ -305,7 +312,7 @@ public abstract class StaticBatchLense {
                 threads[i] = new Thread(() -> {
                     assert(lenseFinal != null);
 
-                    System.err.println("Starting game " + iFinal);
+                    log.info("Starting game " + iFinal);
 
                     lenseFinal.playGame(game, batch);
                     synchronized (games) {
@@ -360,7 +367,7 @@ public abstract class StaticBatchLense {
                 checkpoint(games);
 
                 if (dumpWeights()) {
-                    System.err.println("Dumping weights");
+                    log.info("Dumping weights");
                     BufferedWriter bw = new BufferedWriter(new FileWriter(getThisRunPerformanceReportSubFolder() + "/weights.txt"));
                     try {
                         namespace.debugVector(lenseWithRetraining.weights, bw);
@@ -368,7 +375,7 @@ public abstract class StaticBatchLense {
 
                     }
                     bw.close();
-                    System.err.println("Finished dumping weights");
+                    log.info("Finished dumping weights");
                 }
 
                 // transfer annotations back to the original model

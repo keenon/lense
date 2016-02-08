@@ -1,6 +1,8 @@
 package com.github.keenon.lense.human_server;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -14,6 +16,11 @@ import java.util.function.Consumer;
  * interface of callbacks for the client to use.
  */
 public class HumanSourceClient {
+    /**
+     * An SLF4J Logger for this class.
+     */
+    private static final Logger log = LoggerFactory.getLogger(HumanSourceClient.class);
+
     public Socket socket;
 
     /**
@@ -248,7 +255,7 @@ public class HumanSourceClient {
                     }
                     break;
                 default:
-                    System.err.println("Unrecognized message type: " + response.getType());
+                    log.warn("Unrecognized message type: " + response.getType());
                     break;
             }
         }

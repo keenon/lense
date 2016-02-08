@@ -8,6 +8,8 @@ import com.github.keenon.loglinear.model.GraphicalModel;
 import com.github.keenon.lense.gameplay.Game;
 import com.github.keenon.lense.gameplay.distributions.ContinuousDistribution;
 import com.github.keenon.lense.human_server.mturk.MTurkClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.IdentityHashMap;
@@ -20,6 +22,11 @@ import java.util.function.Consumer;
  * This manages the connection to a central set of long lived human management systems by network APIs.
  */
 public class MTurkHumanSource extends HumanSource {
+    /**
+     * An SLF4J Logger for this class.
+     */
+    private static final Logger log = LoggerFactory.getLogger(MTurkHumanSource.class);
+
     MTurkClient mturk;
     HumanSourceClient humans;
     Map<GraphicalModel, Integer> onlyOnceIDs = new IdentityHashMap<>();
@@ -43,12 +50,12 @@ public class MTurkHumanSource extends HumanSource {
      */
     public MTurkHumanSource(String host, ConcatVectorNamespace namespace, ContinuousDistribution humanDelay) throws IOException {
         humans = new HumanSourceClient(host, 2109);
-        System.err.println("Connected to human GUI at http://"+host+":8080/");
+        log.info("Connected to human GUI at http://" + host + ":8080/");
         try {
             mturk = new MTurkClient(host, 2110);
         }
         catch (Exception e) {
-            System.err.println("Failed to connect to MTurkClient, hiring Turkers programatically will be disabled.");
+            log.info("Failed to connect to MTurkClient, hiring Turkers programatically will be disabled.");
         }
 
         this.namespace = namespace;
@@ -65,7 +72,7 @@ public class MTurkHumanSource extends HumanSource {
             @Override
             public void run()
             {
-                System.err.println("Closing connections...");
+                log.info("Closing connections...");
                 humans.close();
                 if (mturk != null) mturk.close();
             }
@@ -78,7 +85,7 @@ public class MTurkHumanSource extends HumanSource {
      */
     @Override
     public void close() {
-        System.err.println("Closing connections...");
+        log.info("Closing connections...");
         humans.close();
         if (mturk != null) mturk.close();
         Runtime.getRuntime().removeShutdownHook(shutdownHook);

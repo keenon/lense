@@ -90,10 +90,10 @@ public class JettyServer implements Runnable {
       // Disable Jetty logging
       org.eclipse.jetty.util.log.Log.setLog(new Logger {
         override def getName: String = "No logs"
-        override def warn(msg: String, args: AnyRef*): Unit = System.err.println("WARN: "+msg)
+        override def warn(msg: String, args: AnyRef*): Unit = log.warn("WARN: "+msg)
         override def warn(thrown: Throwable): Unit = thrown.printStackTrace()
         override def warn(msg: String, thrown: Throwable): Unit = {
-          System.err.println("WARN: "+msg)
+          log.warn("WARN: "+msg)
           thrown.printStackTrace()
         }
         override def isDebugEnabled: Boolean = false

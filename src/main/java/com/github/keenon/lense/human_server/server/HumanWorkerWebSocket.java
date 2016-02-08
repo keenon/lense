@@ -8,6 +8,8 @@ import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
@@ -21,6 +23,11 @@ import java.util.function.Consumer;
  */
 @WebSocket
 public class HumanWorkerWebSocket extends HumanWorker {
+    /**
+     * An SLF4J Logger for this class.
+     */
+    private static final Logger log = LoggerFactory.getLogger(HumanWorkerWebSocket.class);
+
     Consumer<String> sendResponse;
 
     // Mechanical Turk identifiers
@@ -36,7 +43,7 @@ public class HumanWorkerWebSocket extends HumanWorker {
     Consumer<Integer> currentQueryCallback = null;
 
     public HumanWorkerWebSocket() {
-        System.err.println("New Socket Object Created!");
+        log.info("New Socket Object Created!");
     }
 
     @Override
@@ -199,7 +206,7 @@ public class HumanWorkerWebSocket extends HumanWorker {
     @OnWebSocketConnect
     public void onReady(Session session) {
         synchronized (HumanSourceServer.currentInstance) {
-            System.err.println("Browser connected.");
+            log.info("Browser connected.");
 
             setCurrentState(SocketState.UNREADY);
             initialize((String msg) -> {
@@ -266,18 +273,18 @@ public class HumanWorkerWebSocket extends HumanWorker {
                         hitID = (String) obj.get("hit-id");
                         workerID = (String) obj.get("worker-id");
 
-                        System.err.println("Worker "+workerID+" connected!");
+                        log.info("Worker "+workerID+" connected!");
 
                         // This should only ever arrive when we're in the initialized state
                         if (currentState != SocketState.INITIALIZED) {
-                            System.err.println("Received erroneous ready message");
+                            log.warn("Received erroneous ready message");
                             return;
                         }
 
                         setCurrentState(SocketState.CLIENT_READY);
 
                         if (jobAfterInitialization != null) {
-                            System.err.println("Job after initialization: "+jobAfterInitialization);
+                            log.info("Job after initialization: "+jobAfterInitialization);
                             sendResponse.accept(jobAfterInitialization);
                             setCurrentState(SocketState.CLIENT_ON_JOB);
                             jobAfterInitialization = null;
@@ -300,7 +307,7 @@ public class HumanWorkerWebSocket extends HumanWorker {
 
                     else if (obj.get("type").equals("query-response")) {
                         if (currentState != SocketState.CLIENT_WORKING) {
-                            System.err.println("Ignoring erroneous query-response message");
+                            log.warn("Ignoring erroneous query-response message");
                             return;
                         }
 
@@ -327,7 +334,7 @@ public class HumanWorkerWebSocket extends HumanWorker {
                     }
                 }
             } catch (Exception e) {
-                System.err.println("Malformed JSON: " + message);
+                log.warn("Malformed JSON: " + message);
                 e.printStackTrace();
                 // Temporary, to prevent infinite loops
                 System.exit(1);

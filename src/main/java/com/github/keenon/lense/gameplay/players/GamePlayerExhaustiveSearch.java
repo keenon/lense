@@ -1,6 +1,8 @@
 package com.github.keenon.lense.gameplay.players;
 
 import com.github.keenon.lense.gameplay.Game;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +20,10 @@ import java.util.function.Function;
  * yield the optimal answer every time).
  */
 public class GamePlayerExhaustiveSearch extends GamePlayer {
+    /**
+     * An SLF4J Logger for this class.
+     */
+    private static final Logger log = LoggerFactory.getLogger(GamePlayerExhaustiveSearch.class);
     public int numNodes = 0;
 
     final static int NODE_SIZE_CAP = 1000000;
@@ -52,7 +58,7 @@ public class GamePlayerExhaustiveSearch extends GamePlayer {
 
             if (node.event instanceof Game.TurnIn) {
                 node.utilityAtNode = utility.apply(game);
-                // System.err.println(node.utilityAtNode);
+                // log.info(node.utilityAtNode);
             }
             // If we waited, take a weighted sum of subsequent events
             else if (node.event instanceof Game.Wait) {
@@ -100,15 +106,15 @@ public class GamePlayerExhaustiveSearch extends GamePlayer {
             e.push(root.game);
         }
 
-        // System.err.println("Util: "+root.utilityAtNode);
+        // log.info("Util: "+root.utilityAtNode);
 
         TreeNode cursor = root;
         List<TreeNode> bestPath = new ArrayList<>();
 
         /*
-        System.err.println("Brute force results:");
+        log.info("Brute force results:");
         for (TreeNode child : root.children) {
-            System.err.println(child.event+": "+child.utilityAtNode);
+            log.info(child.event+": "+child.utilityAtNode);
         }
         */
 
@@ -125,11 +131,11 @@ public class GamePlayerExhaustiveSearch extends GamePlayer {
 
         // Code for introspecting on alternate choices for the algorithm
         for (TreeNode step : bestPath) {
-            // System.err.println(step.event.getClass()+": "+step.utilityAtNode);
+            // log.info(step.event.getClass()+": "+step.utilityAtNode);
             if (step.event instanceof Game.QueryLaunch) {
-                System.err.println("Digging in on the things after query launch: ");
+                log.info("Digging in on the things after query launch: ");
                 for (TreeNode child : step.children) {
-                    System.err.println("\t"+child.event.getClass()+": "+child.utilityAtNode);
+                    log.info("\t"+child.event.getClass()+": "+child.utilityAtNode);
                 }
             }
         }
