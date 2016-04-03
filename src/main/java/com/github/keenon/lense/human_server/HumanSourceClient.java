@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.*;
+import java.util.concurrent.Exchanger;
 import java.util.function.Consumer;
 
 /**
@@ -33,25 +34,54 @@ public class HumanSourceClient {
      * @throws IOException in case the socket fails to connect as expected
      */
     public HumanSourceClient(String host, int port) throws IOException {
-        socket = new Socket(host, port);
+        try {
+            socket = new Socket(host, port);
+        }
+        catch (Exception e) {
+            log.warn("Unable to connect to LENSE worker host at \""+host+":"+port+"\", will keep trying.");
+        }
 
         new Thread(() -> {
             while (true) {
-                try {
-                    HumanAPIProto.APIResponse response = HumanAPIProto.APIResponse.parseDelimitedFrom(socket.getInputStream());
-                    if (response == null) break;
-                    // This actually does all the work
-                    parseReceivedMessage(response);
-                } catch (IOException e) {
-                    log.warn("Got an IOException attempting to read from the socket: "+e.getMessage());
-                    if (!socket.isConnected() && running) {
-                        log.warn("Attempting to reconnect LENSE socket to the worker host at \"" + host + ":" + port + "\"");
+
+                boolean needRestartSocket = false;
+
+                if (socket == null) {
+                    needRestartSocket = true;
+                }
+                else {
+                    try {
+                        HumanAPIProto.APIResponse response = HumanAPIProto.APIResponse.parseDelimitedFrom(socket.getInputStream());
+                        if (response == null) {
+                            log.warn("Got a null HumanAPIProto.APIResponse object from socket, probably closed.");
+                            needRestartSocket = true;
+                            socket.close();
+                            socket = null;
+                        }
+                        // This actually does all the work
+                        else parseReceivedMessage(response);
+                    } catch (IOException e) {
+                        log.warn("Got an IOException attempting to read from the socket, probably closed: " + e.getMessage());
+                        needRestartSocket = true;
                         try {
-                            socket = new Socket(host, port);
-                            // Wait for the socket to connect, even if the network is really lagging
+                            socket.close();
+                        } catch (IOException e1) {
+                            e1.printStackTrace();
+                        }
+                        socket = null;
+                    }
+                }
+
+                if (needRestartSocket) {
+                    if (running) {
+                        log.debug("Attempting to reconnect LENSE socket to the worker host at \"" + host + ":" + port + "\"");
+                        try {
+                            // Wait, to ensure that we don't flood the system with reconnect requests
                             Thread.sleep(1000);
+                            socket = new Socket(host, port);
+                            log.info("Successfully reconnected to LENSE worker host at \"" + host + ":" + port + "\"");
                         } catch (IOException | InterruptedException e1) {
-                            log.warn("Failed to reconnect the LENSE socket to the worker host at \"" + host + ":" + port + "\"");
+                            log.debug("Failed to reconnect the LENSE socket to the worker host at \"" + host + ":" + port + "\"");
                         }
                     }
                     else {
@@ -60,6 +90,37 @@ public class HumanSourceClient {
                 }
             }
         }).start();
+    }
+
+    /**
+     * This attempts to send a message over the main socket. If this fails (a sign that the other end of the socket has
+     * closed on us) then we notify the system to start attempting periodic retries, and return false so that the code
+     * that called this can call a failure. If we send the message successfully, we return true.
+     *
+     * @param b the message builder to send
+     * @return whether or not the other side received our message
+     */
+    private synchronized boolean sendRequestSafe(HumanAPIProto.APIRequest.Builder b) {
+        if (socket != null) {
+            try {
+                b.build().writeDelimitedTo(socket.getOutputStream());
+                socket.getOutputStream().flush();
+                return true;
+            } catch (IOException e) {
+                // This means the other side of the socket has hung up on us
+                try {
+                    socket.close();
+                } catch (IOException e1) {
+                    // Dunno what the point of this exception would be
+                }
+                socket = null;
+                return false;
+            }
+        }
+        else {
+            // The socket is currently down, so we'll just fail immediately
+            return false;
+        }
     }
 
     List<JobHandle> jobHandles = new ArrayList<>();
@@ -74,15 +135,9 @@ public class HumanSourceClient {
      * @return a handle to the created job
      */
     public synchronized JobHandle createJob(String JSON, int onlyOnceID, Runnable jobAccepted, Runnable jobAbandoned) {
-
-        JobHandle handle = new JobHandle(socket, onlyOnceID, jobAccepted, jobAbandoned);
+        JobHandle handle = new JobHandle(this, onlyOnceID, jobAccepted, jobAbandoned);
         handle.jobID = jobHandles.size();
         jobHandles.add(handle);
-
-        // If we're disconnected, then there are no workers available
-        if (socket == null || !socket.isConnected()) {
-            return handle;
-        }
 
         HumanAPIProto.APIRequest.Builder b = HumanAPIProto.APIRequest.newBuilder();
         b.setType(HumanAPIProto.APIRequest.MessageType.JobPosting);
@@ -90,13 +145,9 @@ public class HumanSourceClient {
         b.setOnlyOnceID(onlyOnceID);
         b.setJSON(JSON);
 
-        try {
-            synchronized (socket) {
-                b.build().writeDelimitedTo(socket.getOutputStream());
-                socket.getOutputStream().flush();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (!sendRequestSafe(b)) {
+            // This means that this attempt failed, so we need to crash this request
+            jobAbandoned.run();
         }
 
         return handle;
@@ -110,12 +161,6 @@ public class HumanSourceClient {
      * @param numAvailableCallback a callback for this count
      */
     public synchronized void getNumberOfWorkers(int onlyOnceID, Consumer<Integer> numAvailableCallback) {
-        // If we're disconnected, then there are no workers available
-        if (socket == null || !socket.isConnected()) {
-            numAvailableCallback.accept(0);
-            return;
-        }
-
         if (!availableWorkersCallbacks.containsKey(onlyOnceID)) {
             availableWorkersCallbacks.put(onlyOnceID, new ArrayDeque<>());
         }
@@ -126,14 +171,9 @@ public class HumanSourceClient {
         b.setType(HumanAPIProto.APIRequest.MessageType.NumAvailableQuery);
         b.setOnlyOnceID(onlyOnceID);
 
-        try {
-            synchronized (socket) {
-                b.build().writeDelimitedTo(socket.getOutputStream());
-                socket.getOutputStream().flush();
-            }
-        }
-        catch (IOException e) {
-            e.printStackTrace();
+        if (!sendRequestSafe(b)) {
+            // This means that this attempt failed, so we need to crash this request
+            numAvailableCallback.accept(0);
         }
     }
 
@@ -176,10 +216,10 @@ public class HumanSourceClient {
         List<Consumer<Integer>> querySuccessCallbacks = new ArrayList<>();
         List<Runnable> queryFailedCallbacks = new ArrayList<>();
 
-        Socket socket;
+        HumanSourceClient humanSourceClient;
 
-        public JobHandle(Socket socket, int onlyOnceID, Runnable jobAccepted, Runnable jobAbandoned) {
-            this.socket = socket;
+        public JobHandle(HumanSourceClient humanSourceClient, int onlyOnceID, Runnable jobAccepted, Runnable jobAbandoned) {
+            this.humanSourceClient = humanSourceClient;
             this.onlyOnceID = onlyOnceID;
             this.jobAccepted = jobAccepted;
             this.jobAbandoned = jobAbandoned;
@@ -195,12 +235,6 @@ public class HumanSourceClient {
         public synchronized void launchQuery(String JSON, Consumer<Integer> returnValue, Runnable queryFailed) {
             assert(queryFailedCallbacks.size() == querySuccessCallbacks.size());
 
-            // If we're disconnected, then this worker was disconnected and the system needs to take a best guess
-            if (socket == null || !socket.isConnected()) {
-                queryFailed.run();
-                jobAbandoned.run();
-            }
-
             int queryID = querySuccessCallbacks.size();
             querySuccessCallbacks.add(returnValue);
             queryFailedCallbacks.add(queryFailed);
@@ -211,13 +245,11 @@ public class HumanSourceClient {
             b.setQueryID(queryID);
             b.setJSON(JSON);
 
-            try {
-                synchronized (socket) {
-                    b.build().writeDelimitedTo(socket.getOutputStream());
-                    socket.getOutputStream().flush();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
+
+            if (!humanSourceClient.sendRequestSafe(b)) {
+                // If this request fail, we need to kill this query
+                queryFailed.run();
+                jobAbandoned.run();
             }
         }
 
@@ -230,14 +262,7 @@ public class HumanSourceClient {
             b.setType(HumanAPIProto.APIRequest.MessageType.JobRelease);
             b.setJobID(jobID);
 
-            try {
-                synchronized (socket) {
-                    b.build().writeDelimitedTo(socket.getOutputStream());
-                    socket.getOutputStream().flush();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            humanSourceClient.sendRequestSafe(b); // If this fails, then effectively the job is already done
         }
     }
 
@@ -248,7 +273,7 @@ public class HumanSourceClient {
         try {
             // This will interrupt the main client with an exception, so we'll stop reading incoming responses
             running = false;
-            socket.close();
+            if (socket != null) socket.close();
         }
         catch (IOException e) {
             e.printStackTrace();
