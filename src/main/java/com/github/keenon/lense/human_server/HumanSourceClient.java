@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -22,6 +23,7 @@ public class HumanSourceClient {
     private static final Logger log = LoggerFactory.getLogger(HumanSourceClient.class);
 
     public Socket socket;
+    public boolean running = true;
 
     /**
      * This constructs a client for the HumanSourceServer that will connect by socket.
@@ -40,13 +42,21 @@ public class HumanSourceClient {
                     if (response == null) break;
                     // This actually does all the work
                     parseReceivedMessage(response);
-                }
-                catch (InvalidProtocolBufferException e) {
-                    // This will trip if we closed the socket, and were trying to read from it. This is actually
-                    // totally fine, since this is how we're supposed to exit this loop.
-                    break;
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    log.warn("Got an IOException attempting to read from the socket: "+e.getMessage());
+                    if (!socket.isConnected() && running) {
+                        log.warn("Attempting to reconnect LENSE socket to the worker host at \"" + host + ":" + port + "\"");
+                        try {
+                            socket = new Socket(host, port);
+                            // Wait for the socket to connect, even if the network is really lagging
+                            Thread.sleep(1000);
+                        } catch (IOException | InterruptedException e1) {
+                            log.warn("Failed to reconnect the LENSE socket to the worker host at \"" + host + ":" + port + "\"");
+                        }
+                    }
+                    else {
+                        break;
+                    }
                 }
             }
         }).start();
@@ -64,9 +74,15 @@ public class HumanSourceClient {
      * @return a handle to the created job
      */
     public synchronized JobHandle createJob(String JSON, int onlyOnceID, Runnable jobAccepted, Runnable jobAbandoned) {
+
         JobHandle handle = new JobHandle(socket, onlyOnceID, jobAccepted, jobAbandoned);
         handle.jobID = jobHandles.size();
         jobHandles.add(handle);
+
+        // If we're disconnected, then there are no workers available
+        if (socket == null || !socket.isConnected()) {
+            return handle;
+        }
 
         HumanAPIProto.APIRequest.Builder b = HumanAPIProto.APIRequest.newBuilder();
         b.setType(HumanAPIProto.APIRequest.MessageType.JobPosting);
@@ -94,6 +110,12 @@ public class HumanSourceClient {
      * @param numAvailableCallback a callback for this count
      */
     public synchronized void getNumberOfWorkers(int onlyOnceID, Consumer<Integer> numAvailableCallback) {
+        // If we're disconnected, then there are no workers available
+        if (socket == null || !socket.isConnected()) {
+            numAvailableCallback.accept(0);
+            return;
+        }
+
         if (!availableWorkersCallbacks.containsKey(onlyOnceID)) {
             availableWorkersCallbacks.put(onlyOnceID, new ArrayDeque<>());
         }
@@ -109,7 +131,8 @@ public class HumanSourceClient {
                 b.build().writeDelimitedTo(socket.getOutputStream());
                 socket.getOutputStream().flush();
             }
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -172,6 +195,12 @@ public class HumanSourceClient {
         public synchronized void launchQuery(String JSON, Consumer<Integer> returnValue, Runnable queryFailed) {
             assert(queryFailedCallbacks.size() == querySuccessCallbacks.size());
 
+            // If we're disconnected, then this worker was disconnected and the system needs to take a best guess
+            if (socket == null || !socket.isConnected()) {
+                queryFailed.run();
+                jobAbandoned.run();
+            }
+
             int queryID = querySuccessCallbacks.size();
             querySuccessCallbacks.add(returnValue);
             queryFailedCallbacks.add(queryFailed);
@@ -218,6 +247,7 @@ public class HumanSourceClient {
     public void close() {
         try {
             // This will interrupt the main client with an exception, so we'll stop reading incoming responses
+            running = false;
             socket.close();
         }
         catch (IOException e) {

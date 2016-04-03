@@ -50,7 +50,7 @@ public class MTurkHumanSource extends HumanSource {
      */
     public MTurkHumanSource(String host, ConcatVectorNamespace namespace, ContinuousDistribution humanDelay) throws IOException {
         humans = new HumanSourceClient(host, 2109);
-        log.info("Connected to human GUI at http://" + host + ":8080/");
+        log.info("Connected to human GUI at http://" + host + "/ or at http://" + host + ":8080/");
         try {
             mturk = new MTurkClient(host, 2110);
         }
