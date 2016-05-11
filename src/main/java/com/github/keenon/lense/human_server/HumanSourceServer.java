@@ -322,7 +322,7 @@ public class HumanSourceServer implements Runnable {
                         }
                     }
                 }
-                catch(Exception e) {
+                catch (Exception e) {
                     log.info("Closing socket " + socketID);
                     e.printStackTrace();
                     release();

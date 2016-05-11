@@ -60,7 +60,7 @@ public class HumanSourceClient {
                         }
                         // This actually does all the work
                         else parseReceivedMessage(response);
-                    } catch (IOException e) {
+                    } catch (Exception e) {
                         log.warn("Got an IOException attempting to read from the socket, probably closed: " + e.getMessage());
                         needRestartSocket = true;
                         try {
@@ -80,7 +80,7 @@ public class HumanSourceClient {
                             Thread.sleep(1000);
                             socket = new Socket(host, port);
                             log.info("Successfully reconnected to LENSE worker host at \"" + host + ":" + port + "\"");
-                        } catch (IOException | InterruptedException e1) {
+                        } catch (Exception e1) {
                             log.debug("Failed to reconnect the LENSE socket to the worker host at \"" + host + ":" + port + "\"");
                         }
                     }
