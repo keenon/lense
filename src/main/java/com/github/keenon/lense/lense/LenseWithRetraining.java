@@ -12,6 +12,7 @@ import com.github.keenon.lense.human_source.HumanSource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Consumer;
@@ -78,9 +79,7 @@ public class LenseWithRetraining {
                     GraphicalModel[] trainingData = trainingSet.toArray(new GraphicalModel[trainingSet.size()]);
                     AbstractBatchOptimizer opt = new BacktrackingAdaGradOptimizer();
 
-                    weights = opt.optimize(trainingData, new LogLikelihoodDifferentiableFunction(), weights, l2Reg, 5.0e-3, true, executor);
-
-                    namespace.setDenseFeature(weights, "BIAS", new double[]{1.0});
+                    weights = opt.optimize(trainingData, new LogLikelihoodDifferentiableFunction(), weights, l2Reg, 5.0e-3, true, executor, Optional.of(namespace));
                 }
             }
             finished = true;

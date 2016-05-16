@@ -28,7 +28,7 @@ public class ModelTagsHumanSource extends HumanSource {
     static final double humanCorrectnessProb = 0.7;
 
     ConcatVector agreement = new ConcatVector(0);
-    ConcatVector disagreement = new ConcatVector(0);
+    Map<Integer,ConcatVector> disagreementVectors = new HashMap<>();
 
     /**
      * Takes a namespace that will be used in establishing human error matrices.
@@ -39,11 +39,15 @@ public class ModelTagsHumanSource extends HumanSource {
         this.namespace = namespace;
         this.humanDelay = humanDelay;
 
-        namespace.setDenseFeature(agreement, "BIAS", new double[]{Math.log(humanCorrectnessProb)});
-        // Give a uniform chance of selecting any of the other options
-        namespace.setDenseFeature(disagreement, "BIAS", new double[]{Math.log((1-humanCorrectnessProb)/(4-1))});
+        namespace.setAlwaysOneFeature(agreement, Math.log(humanCorrectnessProb));
+        // Give a uniform chance of selecting any of the other options, for each number of variables
+        for (int i = 2; i < 30; i++) {
+            ConcatVector disagreement = new ConcatVector(0);
+            namespace.setAlwaysOneFeature(disagreement, Math.log((1-humanCorrectnessProb)/(i-1)));
+            disagreementVectors.put(i, disagreement);
+        }
 
-        artificialHumanProvider = new Game.ArtificialHumanAgreementDisagrementProvider(agreement, disagreement, humanDelay);
+        artificialHumanProvider = new Game.ArtificialHumanAgreementDisagrementProvider(agreement, disagreementVectors, humanDelay);
     }
 
     /**
@@ -109,10 +113,11 @@ public class ModelTagsHumanSource extends HumanSource {
                 errorModel = new ConcatVectorTable[sizes.length];
                 for (int i = 0; i < errorModel.length; i++) {
                     if (!errorModelFactorCache.containsKey(sizes[i])) {
-                        errorModel[i] = new ConcatVectorTable(new int[]{sizes[i],sizes[i]});
+                        int varSize = sizes[i];
+                        errorModel[i] = new ConcatVectorTable(new int[]{varSize,varSize});
                         for (int[] assn : errorModel[i]) {
                             if (assn[0] == assn[1]) errorModel[i].setAssignmentValue(assn, () -> agreement);
-                            else errorModel[i].setAssignmentValue(assn, () -> disagreement);
+                            else errorModel[i].setAssignmentValue(assn, () -> disagreementVectors.get(varSize));
                         }
                         errorModelFactorCache.put(sizes[i], errorModel[i]);
                     }

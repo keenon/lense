@@ -51,14 +51,14 @@ public class Game {
      */
     public static class ArtificialHumanAgreementDisagrementProvider extends ArtificialHumanProvider {
         ConcatVector agreementVector;
-        ConcatVector disagreementVector;
+        Map<Integer,ConcatVector> disagreementVectors;
         ContinuousDistribution humanDelayDistribution;
 
         public ArtificialHumanAgreementDisagrementProvider(ConcatVector agreementVector,
-                                                           ConcatVector disagreementVector,
+                                                           Map<Integer,ConcatVector> disagreementVectors,
                                                            ContinuousDistribution humanDelayDistribution) {
             this.agreementVector = agreementVector;
-            this.disagreementVector = disagreementVector;
+            this.disagreementVectors = disagreementVectors;
             this.humanDelayDistribution = humanDelayDistribution;
         }
 
@@ -68,9 +68,10 @@ public class Game {
             ConcatVectorTable[] errorDistribution = new ConcatVectorTable[game.variableSizes.length];
             for (int i = 0; i < game.variableSizes.length; i++) {
                 if (game.variableSizes[i] != -1) {
-                    errorDistribution[i] = new ConcatVectorTable(new int[]{game.variableSizes[i],game.variableSizes[i]});
+                    int varSize = game.variableSizes[i];
+                    errorDistribution[i] = new ConcatVectorTable(new int[]{varSize,varSize});
                     for (int[] assn : errorDistribution[i]) {
-                        errorDistribution[i].setAssignmentValue(assn, assn[0] == assn[1] ? ()->agreementVector : ()->disagreementVector);
+                        errorDistribution[i].setAssignmentValue(assn, assn[0] == assn[1] ? ()->agreementVector : ()->disagreementVectors.get(varSize));
                     }
                 }
             }

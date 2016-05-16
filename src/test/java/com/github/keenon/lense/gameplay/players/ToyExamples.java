@@ -7,6 +7,8 @@ import com.github.keenon.lense.gameplay.distributions.DiscreteSetDistribution;
 import com.github.keenon.lense.gameplay.utilities.UncertaintyUtility;
 import com.github.keenon.lense.gameplay.utilities.UncertaintyUtilityWithoutTime;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -31,8 +33,13 @@ public class ToyExamples {
 
         // Run tests
 
+        Map<Integer,ConcatVector> disagreementVectors = new HashMap<>();
+        for (int i = 2; i < 30; i++) {
+            disagreementVectors.put(i, vec(Math.log(humanErrorRate)));
+        }
+
         Random r;
-        Game g = new Game(m, vec(1.0), new Game.ArtificialHumanAgreementDisagrementProvider(vec(Math.log(1.0 - humanErrorRate)), vec(Math.log(humanErrorRate)), new DiscreteSetDistribution(new long[]{2000L})), 2);
+        Game g = new Game(m, vec(1.0), new Game.ArtificialHumanAgreementDisagrementProvider(vec(Math.log(1.0 - humanErrorRate)), disagreementVectors, new DiscreteSetDistribution(new long[]{2000L})), 2);
 
         g.resetEvents();
         r = new Random(42);

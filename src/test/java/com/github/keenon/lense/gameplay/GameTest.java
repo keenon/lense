@@ -268,11 +268,14 @@ public class GameTest {
             ConcatVector weights = weightsGenerator.generate(sourceOfRandomness, generationStatus);
 
             ConcatVector agreementVector = weightsGenerator.generate(sourceOfRandomness, generationStatus);
-            ConcatVector disagreementVector = weightsGenerator.generate(sourceOfRandomness, generationStatus);
+            Map<Integer, ConcatVector> disagreementVectors = new HashMap<>();
+            for (int i = 2; i < 30; i++) {
+                disagreementVectors.put(i, weightsGenerator.generate(sourceOfRandomness, generationStatus));
+            }
 
             ContinuousDistribution humanDelay = new DiscreteSetDistribution(new long[]{ 2000L }); // assume each query deterministically takes 2 seconds
 
-            Game.ArtificialHumanProvider humanSampler = new Game.ArtificialHumanAgreementDisagrementProvider(agreementVector, disagreementVector, humanDelay);
+            Game.ArtificialHumanProvider humanSampler = new Game.ArtificialHumanAgreementDisagrementProvider(agreementVector, disagreementVectors, humanDelay);
             return new Game(modelGenerator.generate(sourceOfRandomness, generationStatus), weights, humanSampler, 2);
         }
     }

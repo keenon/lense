@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -38,7 +39,7 @@ public class MTurkHumanSource extends HumanSource {
     public double humanCorrectnessProb = 0.7;
 
     ConcatVector agreement = new ConcatVector(0);
-    ConcatVector disagreement = new ConcatVector(0);
+    Map<Integer,ConcatVector> disagreementVectors = new HashMap<>();
 
     public static final String QUERY_JSON = "io.hybridcrowd.humans.MTurkHumanSource.QUERY_JSON";
 
@@ -61,11 +62,9 @@ public class MTurkHumanSource extends HumanSource {
         this.namespace = namespace;
         this.humanDelay = humanDelay;
 
-        namespace.setDenseFeature(agreement, "BIAS", new double[]{Math.log(humanCorrectnessProb)});
-        // Give a uniform chance of selecting any of the other options
-        namespace.setDenseFeature(disagreement, "BIAS", new double[]{Math.log((1-humanCorrectnessProb)/(4-1))});
+        setHumanCorrectnessProb(humanCorrectnessProb);
 
-        artificialHumanProvider = new Game.ArtificialHumanAgreementDisagrementProvider(agreement, disagreement, humanDelay);
+        artificialHumanProvider = new Game.ArtificialHumanAgreementDisagrementProvider(agreement, disagreementVectors, humanDelay);
 
         shutdownHook = new Thread()
         {
@@ -78,6 +77,21 @@ public class MTurkHumanSource extends HumanSource {
             }
         };
         Runtime.getRuntime().addShutdownHook(shutdownHook);
+    }
+
+    /**
+     * This sets the human correctness probability, and updates the vectors we'll use
+     */
+    public void setHumanCorrectnessProb(double humanCorrectnessProb) {
+        this.humanCorrectnessProb = humanCorrectnessProb;
+
+        namespace.setAlwaysOneFeature(agreement, Math.log(humanCorrectnessProb));
+        // Give a uniform chance of selecting any of the other options, for each number of variables
+        for (int i = 2; i < 30; i++) {
+            ConcatVector disagreement = new ConcatVector(0);
+            namespace.setAlwaysOneFeature(disagreement, Math.log((1-humanCorrectnessProb)/(i-1)));
+            disagreementVectors.put(i, disagreement);
+        }
     }
 
     /**
@@ -107,7 +121,7 @@ public class MTurkHumanSource extends HumanSource {
         if (!onlyOnceIDs.containsKey(model)) {
             onlyOnceIDs.put(model, onlyOnceIDs.size());
         }
-        MTurkHumanHandle humanHandle = new MTurkHumanHandle(model, humans, namespace, humanDelay, agreement, disagreement);
+        MTurkHumanHandle humanHandle = new MTurkHumanHandle(model, humans, namespace, humanDelay, agreement, disagreementVectors);
         HumanSourceClient.JobHandle[] jobHandleRef = new HumanSourceClient.JobHandle[1];
 
         jobHandleRef[0] = humans.createJob(model.getModelMetaDataByReference().getOrDefault(QUERY_JSON, "{}"), onlyOnceIDs.get(model), () -> {
@@ -134,7 +148,7 @@ public class MTurkHumanSource extends HumanSource {
         ConcatVectorNamespace namespace;
         ContinuousDistribution delayDistribution;
         ConcatVector agreement;
-        ConcatVector disagreement;
+        Map<Integer,ConcatVector> disagreementVectors;
         GraphicalModel model;
         int[] sizes;
 
@@ -143,13 +157,13 @@ public class MTurkHumanSource extends HumanSource {
                                 ConcatVectorNamespace namespace,
                                 ContinuousDistribution delayDistribution,
                                 ConcatVector agreement,
-                                ConcatVector disagreement) {
+                                Map<Integer,ConcatVector> disagreementVectors) {
             this.model = model;
             this.humans = humans;
             this.namespace = namespace;
             this.delayDistribution = delayDistribution;
             this.agreement = agreement;
-            this.disagreement = disagreement;
+            this.disagreementVectors = disagreementVectors;
             sizes = model.getVariableSizes();
         }
 
@@ -163,11 +177,12 @@ public class MTurkHumanSource extends HumanSource {
             ConcatVectorTable[] errorModel = new ConcatVectorTable[Math.max(sizes.length, model.variableMetaData.size())];
             for (int i = 0; i < errorModel.length; i++) {
                 if (i < sizes.length && sizes[i] > -1) {
+                    int varSize = sizes[i];
                     errorModel[i] = new ConcatVectorTable(new int[]{
-                            sizes[i], sizes[i]
+                            varSize, varSize
                     });
                     for (int[] assn : errorModel[i]) {
-                        errorModel[i].setAssignmentValue(assn, assn[0] == assn[1] ? () -> agreement : () -> disagreement);
+                        errorModel[i].setAssignmentValue(assn, assn[0] == assn[1] ? () -> agreement : () -> disagreementVectors.get(varSize));
                     }
                 }
             }

@@ -128,15 +128,18 @@ public class LenseTest {
 
         List<DelayHumanHandle> handles = new ArrayList<>();
         ConcatVector agreeWeights = new ConcatVector(1);
-        ConcatVector disagreeWeights = new ConcatVector(1);
+        Map<Integer,ConcatVector> disagreeWeights = new HashMap<>();
 
         @Override
         public Game.ArtificialHumanProvider getSimulatedProvider() {
             agreeWeights = new ConcatVector(1);
             agreeWeights.setSparseComponent(0,0,0.5);
 
-            disagreeWeights = new ConcatVector(1);
-            disagreeWeights.setSparseComponent(0, 0, -0.5);
+            for (int i = 2; i < 30; i++) {
+                ConcatVector disagreeWeight = new ConcatVector(1);
+                disagreeWeight.setSparseComponent(0, 0, -0.5);
+                disagreeWeights.put(i, disagreeWeight);
+            }
 
             ContinuousDistribution delay = new DiscreteSetDistribution(new long[]{1L});
 
@@ -179,19 +182,20 @@ public class LenseTest {
 
         ConcatVectorTable[] errorModel;
 
-        public DelayHumanHandle(GraphicalModel model, ConcatVector agreeWeights, ConcatVector disagreeWeights) {
+        public DelayHumanHandle(GraphicalModel model, ConcatVector agreeWeights, Map<Integer,ConcatVector> disagreeWeights) {
             this.model = model;
             sizes = model.getVariableSizes();
 
             errorModel = new ConcatVectorTable[sizes.length];
             for (int i = 0; i < errorModel.length; i++) {
                 if (sizes[i] > 0) {
+                    int varSize = sizes[i];
                     errorModel[i] = new ConcatVectorTable(new int[]{
-                            sizes[i], sizes[i]
+                            varSize, varSize
                     });
                     for (int[] assn : errorModel[i]) {
                         if (assn[0] == assn[1]) errorModel[i].setAssignmentValue(assn, () -> agreeWeights);
-                        else errorModel[i].setAssignmentValue(assn, () -> disagreeWeights);
+                        else errorModel[i].setAssignmentValue(assn, () -> disagreeWeights.get(varSize));
                     }
                 }
             }
