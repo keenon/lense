@@ -4,7 +4,7 @@
 
     <groupId>com.github.keenon</groupId>
     <artifactId>lense</artifactId>
-    <version>1.2.14</version>
+    <version>1.2.15-SNAPSHOT</version>
 
     <!-- Info for Maven Central repo -->
 
@@ -37,7 +37,7 @@
     <scm>
         <connection>scm:git:https://github.com/keenon/lense.git</connection>
         <url>https://github.com/keenon/lense</url>
-        <tag>lense-1.2.14</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <developers>
