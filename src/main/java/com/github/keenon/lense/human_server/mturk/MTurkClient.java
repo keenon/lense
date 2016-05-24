@@ -34,10 +34,16 @@ public class MTurkClient {
     public MTurkClient(String host, int port) throws IOException {
         socket = new Socket(host, port);
 
-        new Thread(() -> {
+        Thread t = new Thread(() -> {
             while (true) {
                 try {
                     if (socket.isClosed()) break;
+                    // While there's nothing available, sleep as quietly as possible, and eventually kill the process
+                    // on a local timeout
+                    if (socket.getInputStream().available() == 0) {
+                        Thread.sleep(20);
+                        continue;
+                    }
 
                     MTurkAPIProto.MTurkAPIResponse response = MTurkAPIProto.MTurkAPIResponse.parseDelimitedFrom(socket.getInputStream());
                     if (response == null) break;
@@ -73,9 +79,14 @@ public class MTurkClient {
                     // This may also trip if we closed the socket, and were trying to read from it. This is actually
                     // totally fine, since this is how we're supposed to exit this loop.
                     break;
+                } catch (InterruptedException e) {
+                    // Got interrupted during sleep, just continue
+                    e.printStackTrace();
                 }
             }
-        }).start();
+        });
+        t.setDaemon(true);
+        t.start();
     }
 
     /**
